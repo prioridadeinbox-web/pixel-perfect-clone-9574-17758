@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Pencil, Trash2, Check, ChevronsUpDown } from "lucide-react";
+import { Plus, Pencil, Trash2, Check, ChevronsUpDown, MessageSquarePlus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
@@ -14,6 +14,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { ActivityLogger } from "@/lib/activityLogger";
+import { ManualTimelineDialog } from "@/components/admin/ManualTimelineDialog";
 
 const PlanosAdquiridosTab = () => {
   const [planosAdquiridos, setPlanosAdquiridos] = useState<any[]>([]);
@@ -25,10 +26,12 @@ const PlanosAdquiridosTab = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"id_carteira" | "status_plano" | "created_at">("id_carteira");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [manualTimelineOpen, setManualTimelineOpen] = useState(false);
+  const [selectedPlanoId, setSelectedPlanoId] = useState<string>("");
   const [formData, setFormData] = useState<{
     cliente_id: string;
     plano_id: string;
-    status_plano: "ativo" | "eliminado" | "pausado" | "segunda_chance" | "sim_rem" | "teste_1" | "teste_2";
+    status_plano: "ativo" | "eliminado" | "pausado" | "sim_rem" | "teste_1" | "teste_2";
     tipo_saque: "mensal" | "quinzenal";
     id_carteira: string;
   }>({
@@ -212,7 +215,6 @@ const PlanosAdquiridosTab = () => {
               <SelectItem value="ativo">Ativo</SelectItem>
               <SelectItem value="eliminado">Eliminado</SelectItem>
               <SelectItem value="pausado">Pausado</SelectItem>
-              <SelectItem value="segunda_chance">Segunda Chance</SelectItem>
               <SelectItem value="sim_rem">Sim Rem</SelectItem>
               <SelectItem value="teste_1">Teste 1</SelectItem>
               <SelectItem value="teste_2">Teste 2</SelectItem>
@@ -338,7 +340,6 @@ const PlanosAdquiridosTab = () => {
                   <SelectContent>
                     <SelectItem value="ativo">Ativo</SelectItem>
                     <SelectItem value="eliminado">Eliminado</SelectItem>
-                    <SelectItem value="segunda_chance">Segunda Chance</SelectItem>
                     <SelectItem value="teste_1">Teste 1</SelectItem>
                     <SelectItem value="teste_2">Teste 2</SelectItem>
                     <SelectItem value="sim_rem">Sim. Rem.</SelectItem>
@@ -396,6 +397,17 @@ const PlanosAdquiridosTab = () => {
               <TableCell>{pa.tipo_saque}</TableCell>
               <TableCell>
                 <div className="flex gap-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => {
+                      setSelectedPlanoId(pa.id);
+                      setManualTimelineOpen(true);
+                    }}
+                    title="Adicionar linha na timeline"
+                  >
+                    <MessageSquarePlus className="h-4 w-4" />
+                  </Button>
                   <Button size="sm" variant="outline" onClick={() => handleEdit(pa)}>
                     <Pencil className="h-4 w-4" />
                   </Button>
@@ -408,6 +420,13 @@ const PlanosAdquiridosTab = () => {
           ))}
         </TableBody>
       </Table>
+
+      <ManualTimelineDialog
+        open={manualTimelineOpen}
+        onOpenChange={setManualTimelineOpen}
+        planoAdquiridoId={selectedPlanoId}
+        onSuccess={loadData}
+      />
     </div>
   );
 };

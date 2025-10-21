@@ -364,7 +364,6 @@ const Dashboard = () => {
   const getStatusBadge = (status: string) => {
     const statusMap: any = {
       eliminado: { color: "text-red-500", label: "Eliminado" },
-      segunda_chance: { color: "text-orange-500", label: "Segunda Chance" },
       teste_1: { color: "text-orange-500", label: "Teste 1" },
       teste_2: { color: "text-orange-500", label: "Teste 2" },
       sim_rem: { color: "text-green-500", label: "Simulador Rem." },
@@ -608,31 +607,31 @@ const Dashboard = () => {
                   </span>
                 </div>
 
-                {/* Buttons on the right */}
-                {profile?.pagamento_ativo && (
-                  <div className="flex gap-3">
-                    <div className="flex flex-col items-start">
-                      <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8">
-                        ATIVAR PROFIT ONE
-                      </Button>
-                      <p className="text-[22px] font-bold text-foreground mt-2">R$ 90,00 por mês</p>
-                      <p className="text-xs text-foreground/70">Primeiro mês grátis para novos usuários</p>
-                    </div>
-                    <div className="flex flex-col items-start">
-                      <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8">
-                        ATIVAR PROFIT PRO
-                      </Button>
-                      <p className="text-[22px] font-bold text-foreground mt-2">R$ 220,00 por mês</p>
-                    </div>
+                {/* Buttons on the right - SEMPRE VISÍVEIS */}
+                <div className="flex gap-3">
+                  <div className="flex flex-col items-start">
+                    <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8">
+                      ATIVAR PROFIT ONE
+                    </Button>
+                    <p className="text-[22px] font-bold text-foreground mt-2">R$ 90,00 por mês</p>
+                    <p className="text-xs text-foreground/70">Primeiro mês grátis para novos usuários</p>
+                  </div>
+                  <div className="flex flex-col items-start">
+                    <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8">
+                      ATIVAR PROFIT PRO
+                    </Button>
+                    <p className="text-[22px] font-bold text-foreground mt-2">R$ 220,00 por mês</p>
+                  </div>
+                  {profile?.pagamento_ativo && (
                     <Button className="bg-foreground hover:bg-foreground/90 text-white font-bold px-8">
                       DESATIVAR PLANO
                     </Button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
               
               {!profile?.pagamento_ativo && (
-                <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg mt-4">
                   <p className="text-sm text-destructive font-medium">
                     Seu acesso à plataforma foi desativado. Entre em contato com o suporte para mais informações.
                   </p>

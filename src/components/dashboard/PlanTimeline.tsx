@@ -1,4 +1,4 @@
-import { FileDown } from "lucide-react";
+import { FileDown, Paperclip } from "lucide-react";
 
 interface TimelineEntry {
   id: string;
@@ -93,15 +93,15 @@ export const PlanTimeline = ({ entries }: PlanTimelineProps) => {
               {entry.comprovante_url && (
                 <>
                   <span>|</span>
-                  <span>Comprovante</span>
                   <a 
                     href={entry.comprovante_url} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center hover:opacity-70"
+                    className="inline-flex items-center gap-1 hover:opacity-70 text-primary"
                     title="Ver comprovante"
                   >
-                    <FileDown className="w-4 h-4" />
+                    <Paperclip className="w-4 h-4" />
+                    <span className="text-sm">Anexo</span>
                   </a>
                 </>
               )}
