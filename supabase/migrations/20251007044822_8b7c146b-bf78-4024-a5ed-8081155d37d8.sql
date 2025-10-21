@@ -1,0 +1,10 @@
+-- Add new registration fields to profiles table
+ALTER TABLE public.profiles
+ADD COLUMN IF NOT EXISTS data_nascimento DATE,
+ADD COLUMN IF NOT EXISTS telefone TEXT,
+ADD COLUMN IF NOT EXISTS cpf TEXT,
+ADD COLUMN IF NOT EXISTS rua_bairro TEXT,
+ADD COLUMN IF NOT EXISTS numero_residencial TEXT,
+ADD COLUMN IF NOT EXISTS cep TEXT,
+ADD COLUMN IF NOT EXISTS cidade TEXT,
+ADD COLUMN IF NOT EXISTS estado TEXT;

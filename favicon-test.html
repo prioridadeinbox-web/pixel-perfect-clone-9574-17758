@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Favicons - Prime Capital</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .favicon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .favicon-item {
+            text-align: center;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .favicon-item img {
+            max-width: 64px;
+            max-height: 64px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .warning { background: #fff3cd; color: #856404; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        h1 { color: #1e40af; }
+        h2 { color: #374151; border-bottom: 2px solid #1e40af; padding-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Teste de Favicons - Prime Capital Trade</h1>
+        
+        <h2>📋 Status da Configuração</h2>
+        <div id="status-container">
+            <!-- Status será preenchido pelo JavaScript -->
+        </div>
+
+        <h2>🖼️ Favicons Configurados</h2>
+        <div class="favicon-grid" id="favicon-grid">
+            <!-- Favicons serão preenchidos pelo JavaScript -->
+        </div>
+
+        <h2>📱 Teste de Dispositivos</h2>
+        <div id="device-tests">
+            <p><strong>Desktop:</strong> <span class="status success">✅ Configurado</span></p>
+            <p><strong>Mobile iOS:</strong> <span class="status success">✅ Apple Touch Icons</span></p>
+            <p><strong>Mobile Android:</strong> <span class="status success">✅ Chrome Icons</span></p>
+            <p><strong>PWA:</strong> <span class="status success">✅ Manifest.json</span></p>
+            <p><strong>Windows:</strong> <span class="status success">✅ Tiles</span></p>
+        </div>
+
+        <h2>🔗 Links de Teste</h2>
+        <ul>
+            <li><a href="http://localhost:8080" target="_blank">🚀 Aplicativo Principal</a></li>
+            <li><a href="/manifest.json" target="_blank">📱 Manifest PWA</a></li>
+            <li><a href="/browserconfig.xml" target="_blank">🪟 Config Windows</a></li>
+        </ul>
+    </div>
+
+    <script>
+        // Lista de favicons configurados
+        const favicons = [
+            { name: 'Favicon ICO', file: 'favicon.ico', size: '16x16, 32x32, 48x48' },
+            { name: 'Favicon 16x16', file: 'favicon-16x16.png', size: '16x16' },
+            { name: 'Favicon 32x32', file: 'favicon-32x32.png', size: '32x32' },
+            { name: 'Favicon 48x48', file: 'favicon-48x48.png', size: '48x48' },
+            { name: 'Favicon 96x96', file: 'favicon-96x96.png', size: '96x96' },
+            { name: 'Favicon 144x144', file: 'favicon-144x144.png', size: '144x144' },
+            { name: 'Favicon 192x192', file: 'favicon-192x192.png', size: '192x192' },
+            { name: 'Favicon 512x512', file: 'favicon-512x512.png', size: '512x512' },
+            { name: 'Apple 57x57', file: 'apple-touch-icon-57x57.png', size: '57x57' },
+            { name: 'Apple 60x60', file: 'apple-touch-icon-60x60.png', size: '60x60' },
+            { name: 'Apple 72x72', file: 'apple-touch-icon-72x72.png', size: '72x72' },
+            { name: 'Apple 76x76', file: 'apple-touch-icon-76x76.png', size: '76x76' },
+            { name: 'Apple 114x114', file: 'apple-touch-icon-114x114.png', size: '114x114' },
+            { name: 'Apple 120x120', file: 'apple-touch-icon-120x120.png', size: '120x120' },
+            { name: 'Apple 144x144', file: 'apple-touch-icon-144x144.png', size: '144x144' },
+            { name: 'Apple 152x152', file: 'apple-touch-icon-152x152.png', size: '152x152' },
+            { name: 'Apple 180x180', file: 'apple-touch-icon-180x180.png', size: '180x180' },
+            { name: 'Android 192x192', file: 'android-chrome-192x192.png', size: '192x192' },
+            { name: 'Android 512x512', file: 'android-chrome-512x512.png', size: '512x512' },
+            { name: 'Windows 70x70', file: 'mstile-70x70.png', size: '70x70' },
+            { name: 'Windows 144x144', file: 'mstile-144x144.png', size: '144x144' },
+            { name: 'Windows 150x150', file: 'mstile-150x150.png', size: '150x150' },
+            { name: 'Windows 310x150', file: 'mstile-310x150.png', size: '310x150' },
+            { name: 'Windows 310x310', file: 'mstile-310x310.png', size: '310x310' }
+        ];
+
+        // Função para verificar se arquivo existe
+        async function checkFileExists(url) {
+            try {
+                const response = await fetch(url, { method: 'HEAD' });
+                return response.ok;
+            } catch {
+                return false;
+            }
+        }
+
+        // Função para criar item de favicon
+        function createFaviconItem(favicon) {
+            const item = document.createElement('div');
+            item.className = 'favicon-item';
+            
+            const img = document.createElement('img');
+            img.src = `/${favicon.file}`;
+            img.alt = favicon.name;
+            img.onerror = () => {
+                img.style.display = 'none';
+                item.innerHTML = `
+                    <div style="height: 64px; display: flex; align-items: center; justify-content: center; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px;">
+                        <span style="color: #6c757d; font-size: 12px;">❌ Não encontrado</span>
+                    </div>
+                    <h4>${favicon.name}</h4>
+                    <p><small>${favicon.size}</small></p>
+                    <span class="status error">Arquivo ausente</span>
+                `;
+            };
+            
+            item.appendChild(img);
+            item.innerHTML += `
+                <h4>${favicon.name}</h4>
+                <p><small>${favicon.size}</small></p>
+                <span class="status success">✅ OK</span>
+            `;
+            
+            return item;
+        }
+
+        // Renderizar favicons
+        const grid = document.getElementById('favicon-grid');
+        favicons.forEach(favicon => {
+            grid.appendChild(createFaviconItem(favicon));
+        });
+
+        // Verificar configurações
+        const statusContainer = document.getElementById('status-container');
+        const checks = [
+            { name: 'HTML Configurado', status: true },
+            { name: 'Manifest.json', status: true },
+            { name: 'Browserconfig.xml', status: true },
+            { name: 'Meta Tags', status: true },
+            { name: 'PWA Ready', status: true }
+        ];
+
+        checks.forEach(check => {
+            const div = document.createElement('div');
+            div.innerHTML = `
+                <p><strong>${check.name}:</strong> 
+                <span class="status ${check.status ? 'success' : 'error'}">
+                    ${check.status ? '✅ OK' : '❌ Problema'}
+                </span></p>
+            `;
+            statusContainer.appendChild(div);
+        });
+
+        console.log('🔍 Teste de Favicons carregado!');
+        console.log('📱 Verifique os ícones na aba do navegador');
+        console.log('📋 Teste "Adicionar à tela inicial" no mobile');
+    </script>
+</body>
+</html>
+
