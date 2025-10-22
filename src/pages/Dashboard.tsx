@@ -643,7 +643,13 @@ const Dashboard = () => {
                 <div className="flex gap-3">
                   <div className="flex flex-col items-start">
                     <Button 
-                      onClick={() => window.open(profitOneLink, "_blank")}
+                      onClick={() => {
+                        if (profitOneLink && profitOneLink !== "#") {
+                          window.open(profitOneLink, "_blank", "noopener,noreferrer");
+                        } else {
+                          toast.error("Link não configurado. Entre em contato com o suporte.");
+                        }
+                      }}
                       className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8"
                     >
                       ATIVAR PROFIT ONE
@@ -653,7 +659,13 @@ const Dashboard = () => {
                   </div>
                   <div className="flex flex-col items-start">
                     <Button 
-                      onClick={() => window.open(profitProLink, "_blank")}
+                      onClick={() => {
+                        if (profitProLink && profitProLink !== "#") {
+                          window.open(profitProLink, "_blank", "noopener,noreferrer");
+                        } else {
+                          toast.error("Link não configurado. Entre em contato com o suporte.");
+                        }
+                      }}
                       className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8"
                     >
                       ATIVAR PROFIT PRO
