@@ -244,33 +244,31 @@ export const SolicitacoesTab = () => {
 
       if (solicitacaoError) throw solicitacaoError;
 
-      // Anexar extras (valor_final/comprovante) na última entrada criada pela trigger
-      if (valorFinal || comprovanteUrl) {
-        // Garantir que a trigger executou
-        await new Promise(resolve => setTimeout(resolve, 100));
+      // SEMPRE anexar extras (valor_final/comprovante) na última entrada criada pela trigger
+      // Garantir que a trigger executou
+      await new Promise(resolve => setTimeout(resolve, 150));
 
-        const { data: ultima, error: selectErr } = await supabase
+      const { data: ultima, error: selectErr } = await supabase
+        .from('historico_observacoes')
+        .select('id')
+        .eq('solicitacao_id', selectedSolicitacao.id)
+        .eq('origem', 'admin')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (selectErr) throw selectErr;
+
+      if (ultima?.id) {
+        const { error: historicoError } = await supabase
           .from('historico_observacoes')
-          .select('id')
-          .eq('solicitacao_id', selectedSolicitacao.id)
-          .eq('origem', 'admin')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+          .update({
+            valor_final: valorFinal ? parseFloat(valorFinal) : null,
+            comprovante_url: comprovanteUrl || null,
+          })
+          .eq('id', ultima.id);
 
-        if (selectErr) throw selectErr;
-
-        if (ultima?.id) {
-          const { error: historicoError } = await supabase
-            .from('historico_observacoes')
-            .update({
-              valor_final: valorFinal ? parseFloat(valorFinal) : null,
-              comprovante_url: comprovanteUrl || null,
-            })
-            .eq('id', ultima.id);
-
-          if (historicoError) throw historicoError;
-        }
+        if (historicoError) throw historicoError;
       }
 
       toast.success("Solicitação atualizada com sucesso!");
