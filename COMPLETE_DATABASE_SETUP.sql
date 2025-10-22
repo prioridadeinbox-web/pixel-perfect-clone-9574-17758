@@ -103,11 +103,11 @@ DROP TYPE IF EXISTS public.app_role CASCADE;
 DO $$ 
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'app_role') THEN
-    CREATE TYPE public.app_role AS ENUM ('admin', 'cliente', 'superadmin');
+    CREATE TYPE public.app_role AS ENUM ('admin', 'cliente', 'super_admin');
   END IF;
   
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'plan_status') THEN
-    CREATE TYPE public.plan_status AS ENUM ('ativo', 'pausado', 'concluido', 'cancelado', 'teste_1_sc', 'teste_2_sc');
+    CREATE TYPE public.plan_status AS ENUM ('eliminado', 'teste_1', 'teste_2', 'sim_rem', 'ativo', 'pausado', 'teste_1_sc', 'teste_2_sc');
   END IF;
   
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'withdrawal_type') THEN
