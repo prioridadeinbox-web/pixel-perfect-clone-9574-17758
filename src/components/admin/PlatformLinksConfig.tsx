@@ -38,17 +38,36 @@ export const PlatformLinksConfig = () => {
     }
   };
 
+  // Normaliza a URL adicionando https:// se necessário
+  const normalizeUrl = (url: string): string => {
+    if (!url || url.trim() === "") return "";
+    
+    const trimmedUrl = url.trim();
+    
+    // Se já tem protocolo, retorna como está
+    if (trimmedUrl.startsWith("http://") || trimmedUrl.startsWith("https://")) {
+      return trimmedUrl;
+    }
+    
+    // Adiciona https:// automaticamente
+    return `https://${trimmedUrl}`;
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
+      // Normaliza as URLs antes de salvar
+      const normalizedProfitOne = normalizeUrl(profitOneLink);
+      const normalizedProfitPro = normalizeUrl(profitProLink);
+
       const updates = [
         {
           config_key: "profit_one_link",
-          config_value: profitOneLink,
+          config_value: normalizedProfitOne,
         },
         {
           config_key: "profit_pro_link",
-          config_value: profitProLink,
+          config_value: normalizedProfitPro,
         },
       ];
 
@@ -59,6 +78,10 @@ export const PlatformLinksConfig = () => {
 
         if (error) throw error;
       }
+
+      // Atualiza os estados com as URLs normalizadas
+      setProfitOneLink(normalizedProfitOne);
+      setProfitProLink(normalizedProfitPro);
 
       toast.success("Links atualizados com sucesso!");
     } catch (error: any) {
@@ -84,22 +107,28 @@ export const PlatformLinksConfig = () => {
           <Label htmlFor="profitOne">Link do botão "ATIVAR PROFIT ONE"</Label>
           <Input
             id="profitOne"
-            type="url"
-            placeholder="https://exemplo.com/profit-one"
+            type="text"
+            placeholder="youtube.com ou https://exemplo.com/profit-one"
             value={profitOneLink}
             onChange={(e) => setProfitOneLink(e.target.value)}
           />
+          <p className="text-xs text-muted-foreground">
+            Pode digitar com ou sem https:// (será adicionado automaticamente)
+          </p>
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="profitPro">Link do botão "ATIVAR PROFIT PRO"</Label>
           <Input
             id="profitPro"
-            type="url"
-            placeholder="https://exemplo.com/profit-pro"
+            type="text"
+            placeholder="youtube.com ou https://exemplo.com/profit-pro"
             value={profitProLink}
             onChange={(e) => setProfitProLink(e.target.value)}
           />
+          <p className="text-xs text-muted-foreground">
+            Pode digitar com ou sem https:// (será adicionado automaticamente)
+          </p>
         </div>
 
         <Button onClick={handleSave} disabled={saving} className="w-full">
