@@ -35,17 +35,33 @@ export const PlanTimeline = ({ entries }: PlanTimelineProps) => {
     setCurrentDocUrl(comprovanteUrl);
     
     try {
-      const path = comprovanteUrl.includes('/documentos/')
-        ? comprovanteUrl.split('/documentos/')[1]
-        : comprovanteUrl;
+      // O comprovanteUrl pode ser apenas o path (ex: "comprovantes/file.jpg")
+      // ou pode ser uma URL completa. Precisamos extrair apenas o path.
+      let path = comprovanteUrl;
+      
+      // Se for URL completa, extrair o path depois de /documentos/
+      if (comprovanteUrl.includes('/documentos/')) {
+        path = comprovanteUrl.split('/documentos/')[1];
+      }
+      // Se for URL pública, extrair depois de /public/documentos/
+      else if (comprovanteUrl.includes('/public/documentos/')) {
+        path = comprovanteUrl.split('/public/documentos/')[1];
+      }
 
-      const { data } = await supabase.storage
+      const { data, error } = await supabase.storage
         .from('documentos')
         .createSignedUrl(path, 60 * 30); // 30 minutos
 
-      setSignedUrl(data?.signedUrl || comprovanteUrl);
+      if (error) {
+        console.error('Erro ao criar signed URL:', error);
+        setSignedUrl(comprovanteUrl);
+      } else {
+        setSignedUrl(data?.signedUrl || comprovanteUrl);
+      }
+      
       setViewingDocument(true);
     } catch (error) {
+      console.error('Erro geral ao visualizar documento:', error);
       setSignedUrl(comprovanteUrl);
       setViewingDocument(true);
     }
@@ -143,11 +159,11 @@ export const PlanTimeline = ({ entries }: PlanTimelineProps) => {
 
       {/* Dialog de visualização do comprovante */}
       <Dialog open={viewingDocument} onOpenChange={setViewingDocument}>
-        <DialogContent className="sm:max-w-3xl">
+        <DialogContent className="sm:max-w-3xl" aria-describedby="dialog-description">
           <DialogHeader>
             <DialogTitle>Visualizar Comprovante</DialogTitle>
           </DialogHeader>
-          <div className="w-full max-h-[600px] overflow-auto bg-muted rounded-lg p-4">
+          <div id="dialog-description" className="w-full max-h-[600px] overflow-auto bg-muted rounded-lg p-4">
             {currentDocUrl && isPdf(currentDocUrl) ? (
               <div className="p-4 flex flex-col items-center gap-4">
                 <p className="text-sm text-muted-foreground">Arquivo PDF</p>
@@ -162,6 +178,10 @@ export const PlanTimeline = ({ entries }: PlanTimelineProps) => {
                 src={signedUrl || currentDocUrl}
                 alt="Comprovante"
                 className="w-full h-auto object-contain"
+                onError={(e) => {
+                  console.error('Erro ao carregar imagem:', currentDocUrl);
+                  console.error('Signed URL:', signedUrl);
+                }}
               />
             ) : null}
           </div>
