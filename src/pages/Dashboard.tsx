@@ -660,11 +660,9 @@ const Dashboard = () => {
                     </Button>
                     <p className="text-[22px] font-bold text-foreground mt-2">R$ 220,00 por mês</p>
                   </div>
-                  {profile?.pagamento_ativo && (
-                    <Button className="bg-foreground hover:bg-foreground/90 text-white font-bold px-8">
-                      DESATIVAR PLANO
-                    </Button>
-                  )}
+                  <Button className="bg-foreground hover:bg-foreground/90 text-white font-bold px-8">
+                    DESATIVAR PLANO
+                  </Button>
                 </div>
               </div>
               
