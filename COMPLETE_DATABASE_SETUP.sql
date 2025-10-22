@@ -55,23 +55,74 @@ DROP POLICY IF EXISTS "Admins can view platform_config" ON public.platform_confi
 DROP POLICY IF EXISTS "Admins can manage platform_config" ON public.platform_config;
 DROP POLICY IF EXISTS "Users can view platform_config" ON public.platform_config;
 
--- REMOVER TODOS OS TRIGGERS
-DROP TRIGGER IF EXISTS update_profiles_updated_at ON public.profiles;
-DROP TRIGGER IF EXISTS update_planos_updated_at ON public.planos;
-DROP TRIGGER IF EXISTS update_planos_adquiridos_updated_at ON public.planos_adquiridos;
-DROP TRIGGER IF EXISTS update_solicitacoes_updated_at ON public.solicitacoes;
-DROP TRIGGER IF EXISTS update_user_documents_updated_at ON public.user_documents;
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-DROP TRIGGER IF EXISTS sync_platform_status_on_payment_change ON public.profiles;
-DROP TRIGGER IF EXISTS sync_platform_status_trigger ON public.profiles;
-DROP TRIGGER IF EXISTS on_solicitacao_created ON public.solicitacoes;
-DROP TRIGGER IF EXISTS create_timeline_on_request ON public.solicitacoes;
-DROP TRIGGER IF EXISTS on_solicitacao_updated ON public.solicitacoes;
-DROP TRIGGER IF EXISTS update_timeline_on_request ON public.solicitacoes;
-DROP TRIGGER IF EXISTS audit_profile_changes ON public.profiles;
-DROP TRIGGER IF EXISTS audit_profile_updates ON public.profiles;
-DROP TRIGGER IF EXISTS audit_role_changes ON public.user_roles;
-DROP TRIGGER IF EXISTS log_role_changes_trigger ON public.user_roles;
+-- REMOVER TODOS OS TRIGGERS (seguro mesmo se a tabela não existir)
+DO $$
+BEGIN
+  -- profiles
+  IF EXISTS (
+    SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public' AND c.relname = 'profiles'
+  ) THEN
+    EXECUTE 'DROP TRIGGER IF EXISTS update_profiles_updated_at ON public.profiles';
+    EXECUTE 'DROP TRIGGER IF EXISTS audit_profile_changes ON public.profiles';
+    EXECUTE 'DROP TRIGGER IF EXISTS audit_profile_updates ON public.profiles';
+    EXECUTE 'DROP TRIGGER IF EXISTS sync_platform_status_on_payment_change ON public.profiles';
+    EXECUTE 'DROP TRIGGER IF EXISTS sync_platform_status_trigger ON public.profiles';
+  END IF;
+  
+  -- planos
+  IF EXISTS (
+    SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public' AND c.relname = 'planos'
+  ) THEN
+    EXECUTE 'DROP TRIGGER IF EXISTS update_planos_updated_at ON public.planos';
+  END IF;
+  
+  -- planos_adquiridos
+  IF EXISTS (
+    SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public' AND c.relname = 'planos_adquiridos'
+  ) THEN
+    EXECUTE 'DROP TRIGGER IF EXISTS update_planos_adquiridos_updated_at ON public.planos_adquiridos';
+  END IF;
+  
+  -- solicitacoes
+  IF EXISTS (
+    SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public' AND c.relname = 'solicitacoes'
+  ) THEN
+    EXECUTE 'DROP TRIGGER IF EXISTS update_solicitacoes_updated_at ON public.solicitacoes';
+    EXECUTE 'DROP TRIGGER IF EXISTS on_solicitacao_created ON public.solicitacoes';
+    EXECUTE 'DROP TRIGGER IF EXISTS create_timeline_on_request ON public.solicitacoes';
+    EXECUTE 'DROP TRIGGER IF EXISTS on_solicitacao_updated ON public.solicitacoes';
+    EXECUTE 'DROP TRIGGER IF EXISTS update_timeline_on_request ON public.solicitacoes';
+  END IF;
+  
+  -- user_documents
+  IF EXISTS (
+    SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public' AND c.relname = 'user_documents'
+  ) THEN
+    EXECUTE 'DROP TRIGGER IF EXISTS update_user_documents_updated_at ON public.user_documents';
+  END IF;
+  
+  -- user_roles
+  IF EXISTS (
+    SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public' AND c.relname = 'user_roles'
+  ) THEN
+    EXECUTE 'DROP TRIGGER IF EXISTS audit_role_changes ON public.user_roles';
+    EXECUTE 'DROP TRIGGER IF EXISTS log_role_changes_trigger ON public.user_roles';
+  END IF;
+  
+  -- auth.users
+  IF EXISTS (
+    SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'auth' AND c.relname = 'users'
+  ) THEN
+    EXECUTE 'DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users';
+  END IF;
+END $$;
 
 -- REMOVER TODAS AS FUNÇÕES
 DROP FUNCTION IF EXISTS public.has_role(uuid, app_role);
