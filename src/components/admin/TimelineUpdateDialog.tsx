@@ -38,17 +38,14 @@ export const TimelineUpdateDialog = ({
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `comprovantes/${fileName}`;
 
-      const { error: uploadError, data } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('documentos')
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('documentos')
-        .getPublicUrl(filePath);
-
-      setComprovanteUrl(publicUrl);
+      // Salvar apenas o caminho do storage (bucket privado)
+      setComprovanteUrl(filePath);
       toast.success("Comprovante enviado com sucesso!");
     } catch (error: any) {
       toast.error(error.message);
