@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +29,48 @@ export const ManualTimelineDialog = ({
   const [loading, setLoading] = useState(false);
   const [viewingDocument, setViewingDocument] = useState(false);
   const [signedUrl, setSignedUrl] = useState('');
+
+  const getPath = (value: string) =>
+    value.includes('/documentos/') ? value.split('/documentos/')[1] : value;
+  
+  const isPdf = (value: string) => getPath(value).toLowerCase().endsWith('.pdf');
+
+  // Criar signed URL quando o dialog de visualização abre
+  useEffect(() => {
+    if (!viewingDocument || !comprovanteUrl) {
+      setSignedUrl('');
+      return;
+    }
+
+    let cancelled = false;
+    
+    (async () => {
+      try {
+        const path = getPath(comprovanteUrl);
+        const { data, error } = await supabase.storage
+          .from('documentos')
+          .createSignedUrl(path, 60 * 30); // 30 minutos
+
+        if (!cancelled) {
+          if (error) {
+            console.error('Erro ao criar signed URL:', error);
+            setSignedUrl(comprovanteUrl);
+          } else {
+            setSignedUrl(data?.signedUrl || comprovanteUrl);
+          }
+        }
+      } catch (error) {
+        console.error('Erro geral ao visualizar documento:', error);
+        if (!cancelled) {
+          setSignedUrl(comprovanteUrl);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [viewingDocument, comprovanteUrl]);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -60,40 +102,8 @@ export const ManualTimelineDialog = ({
     }
   };
 
-  const handleViewDocument = async () => {
-    if (!comprovanteUrl) return;
-
-    try {
-      // O comprovanteUrl pode ser apenas o path (ex: "comprovantes/file.jpg")
-      // ou pode ser uma URL completa. Precisamos extrair apenas o path.
-      let path = comprovanteUrl;
-      
-      // Se for URL completa, extrair o path depois de /documentos/
-      if (comprovanteUrl.includes('/documentos/')) {
-        path = comprovanteUrl.split('/documentos/')[1];
-      }
-      // Se for URL pública, extrair depois de /public/documentos/
-      else if (comprovanteUrl.includes('/public/documentos/')) {
-        path = comprovanteUrl.split('/public/documentos/')[1];
-      }
-
-      const { data, error } = await supabase.storage
-        .from('documentos')
-        .createSignedUrl(path, 60 * 30); // 30 minutos
-
-      if (error) {
-        console.error('Erro ao criar signed URL:', error);
-        setSignedUrl(comprovanteUrl);
-      } else {
-        setSignedUrl(data?.signedUrl || comprovanteUrl);
-      }
-      
-      setViewingDocument(true);
-    } catch (error) {
-      console.error('Erro geral ao visualizar documento:', error);
-      setSignedUrl(comprovanteUrl);
-      setViewingDocument(true);
-    }
+  const handleViewDocument = () => {
+    setViewingDocument(true);
   };
 
   const handleRemoveDocument = () => {
@@ -101,11 +111,6 @@ export const ManualTimelineDialog = ({
     setSignedUrl('');
     toast.success("Comprovante removido");
   };
-
-  const getPath = (url: string) =>
-    url.includes('/documentos/') ? url.split('/documentos/')[1] : url;
-
-  const isPdf = (url: string) => getPath(url).toLowerCase().endsWith('.pdf');
 
   const handleSubmit = async () => {
     if (!observacao.trim()) {
@@ -228,6 +233,9 @@ export const ManualTimelineDialog = ({
         <DialogContent className="sm:max-w-3xl" aria-describedby="comprovante-description">
           <DialogHeader>
             <DialogTitle>Visualizar Comprovante</DialogTitle>
+            <DialogDescription>
+              Visualização do documento anexado
+            </DialogDescription>
           </DialogHeader>
           <div id="comprovante-description" className="w-full max-h-[600px] overflow-auto bg-muted rounded-lg p-4">
             {comprovanteUrl && isPdf(comprovanteUrl) ? (
@@ -244,10 +252,7 @@ export const ManualTimelineDialog = ({
                 src={signedUrl || comprovanteUrl}
                 alt="Comprovante"
                 className="w-full h-auto object-contain"
-                onError={(e) => {
-                  console.error('Erro ao carregar imagem:', comprovanteUrl);
-                  console.error('Signed URL:', signedUrl);
-                }}
+                loading="lazy"
               />
             ) : null}
           </div>
