@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Eye, X } from "lucide-react";
 
 interface ManualTimelineDialogProps {
   open: boolean;
@@ -26,6 +27,8 @@ export const ManualTimelineDialog = ({
   const [uploading, setUploading] = useState(false);
   const [comprovanteUrl, setComprovanteUrl] = useState('');
   const [loading, setLoading] = useState(false);
+  const [viewingDocument, setViewingDocument] = useState(false);
+  const [signedUrl, setSignedUrl] = useState('');
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -56,6 +59,37 @@ export const ManualTimelineDialog = ({
       setUploading(false);
     }
   };
+
+  const handleViewDocument = async () => {
+    if (!comprovanteUrl) return;
+
+    try {
+      const path = comprovanteUrl.includes('/documentos/')
+        ? comprovanteUrl.split('/documentos/')[1]
+        : comprovanteUrl;
+
+      const { data } = await supabase.storage
+        .from('documentos')
+        .createSignedUrl(path, 60 * 30); // 30 minutos
+
+      setSignedUrl(data?.signedUrl || comprovanteUrl);
+      setViewingDocument(true);
+    } catch (error) {
+      setSignedUrl(comprovanteUrl);
+      setViewingDocument(true);
+    }
+  };
+
+  const handleRemoveDocument = () => {
+    setComprovanteUrl('');
+    setSignedUrl('');
+    toast.success("Comprovante removido");
+  };
+
+  const getPath = (url: string) =>
+    url.includes('/documentos/') ? url.split('/documentos/')[1] : url;
+
+  const isPdf = (url: string) => getPath(url).toLowerCase().endsWith('.pdf');
 
   const handleSubmit = async () => {
     if (!observacao.trim()) {
@@ -130,17 +164,36 @@ export const ManualTimelineDialog = ({
 
           <div>
             <Label>Comprovante (opcional)</Label>
-            <div className="flex gap-2">
-              <Input
-                type="file"
-                onChange={handleFileUpload}
-                disabled={uploading}
-                accept=".pdf,.jpg,.jpeg,.png"
-              />
-              {uploading && <span className="text-sm text-muted-foreground">Enviando...</span>}
-            </div>
-            {comprovanteUrl && (
-              <p className="text-sm text-primary mt-2">✓ Comprovante anexado</p>
+            {!comprovanteUrl ? (
+              <div className="flex gap-2">
+                <Input
+                  type="file"
+                  onChange={handleFileUpload}
+                  disabled={uploading}
+                  accept=".pdf,.jpg,.jpeg,.png"
+                />
+                {uploading && <span className="text-sm text-muted-foreground">Enviando...</span>}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+                <p className="text-sm text-primary flex-1">✓ Comprovante anexado</p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleViewDocument}
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRemoveDocument}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             )}
           </div>
 
@@ -153,6 +206,33 @@ export const ManualTimelineDialog = ({
           </Button>
         </div>
       </DialogContent>
+
+      {/* Dialog de visualização do comprovante */}
+      <Dialog open={viewingDocument} onOpenChange={setViewingDocument}>
+        <DialogContent className="sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Visualizar Comprovante</DialogTitle>
+          </DialogHeader>
+          <div className="w-full max-h-[600px] overflow-auto bg-muted rounded-lg p-4">
+            {comprovanteUrl && isPdf(comprovanteUrl) ? (
+              <div className="p-4 flex flex-col items-center gap-4">
+                <p className="text-sm text-muted-foreground">Arquivo PDF</p>
+                <Button asChild>
+                  <a href={signedUrl || comprovanteUrl} target="_blank" rel="noopener noreferrer">
+                    Abrir PDF em nova guia
+                  </a>
+                </Button>
+              </div>
+            ) : comprovanteUrl ? (
+              <img
+                src={signedUrl || comprovanteUrl}
+                alt="Comprovante"
+                className="w-full h-auto object-contain"
+              />
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 };
