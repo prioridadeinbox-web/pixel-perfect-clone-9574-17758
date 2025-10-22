@@ -3,12 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Package, ShoppingCart, FileText, UserCog } from "lucide-react";
+import { LogOut, Package, ShoppingCart, FileText, UserCog, Settings } from "lucide-react";
 import { toast } from "sonner";
 import PlanosTab from "@/components/admin/PlanosTab";
 import PlanosAdquiridosTab from "@/components/admin/PlanosAdquiridosTab";
 import { SolicitacoesTab } from "@/components/admin/SolicitacoesTab";
 import { TraderManagementTab } from "@/components/admin/TraderManagementTab";
+import { PlatformLinksConfig } from "@/components/admin/PlatformLinksConfig";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -66,7 +67,7 @@ const Admin = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="solicitacoes" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-8">
+          <TabsList className="grid w-full grid-cols-5 mb-8">
             <TabsTrigger value="solicitacoes">
               <FileText className="mr-2 h-4 w-4" />
               Solicitações
@@ -82,6 +83,10 @@ const Admin = () => {
             <TabsTrigger value="planos-adquiridos">
               <ShoppingCart className="mr-2 h-4 w-4" />
               Planos Adquiridos
+            </TabsTrigger>
+            <TabsTrigger value="configuracoes">
+              <Settings className="mr-2 h-4 w-4" />
+              Configurações
             </TabsTrigger>
           </TabsList>
 
@@ -99,6 +104,10 @@ const Admin = () => {
 
           <TabsContent value="planos-adquiridos">
             <PlanosAdquiridosTab />
+          </TabsContent>
+
+          <TabsContent value="configuracoes">
+            <PlatformLinksConfig />
           </TabsContent>
         </Tabs>
       </main>

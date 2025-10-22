@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Pencil, Check, Eye, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { DocumentViewDialog } from "@/components/dashboard/DocumentViewDialog";
 import iconsRecomecar from "@/assets/icons-recomecar.png";
 import iconsSaque from "@/assets/icons-saque.png";
@@ -27,10 +28,13 @@ import { ActivityLogger } from "@/lib/activityLogger";
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<any>(null);
   const [planosAdquiridos, setPlanosAdquiridos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [profitOneLink, setProfitOneLink] = useState("");
+  const [profitProLink, setProfitProLink] = useState("");
   const [activeDialog, setActiveDialog] = useState<{
     type: 'withdrawal' | 'biweekly' | 'secondChance' | 'comments' | 'approval' | null;
     planId: string;
@@ -123,6 +127,18 @@ const Dashboard = () => {
 
   const loadUserData = async (userId: string) => {
     try {
+      // Carregar links de ativação
+      const { data: configData } = await supabase
+        .from("platform_config")
+        .select("*")
+        .in("config_key", ["profit_one_link", "profit_pro_link"]);
+
+      const oneLink = configData?.find(c => c.config_key === "profit_one_link");
+      const proLink = configData?.find(c => c.config_key === "profit_pro_link");
+      
+      setProfitOneLink(oneLink?.config_value || "#");
+      setProfitProLink(proLink?.config_value || "#");
+
       const { data: profileData } = await supabase
         .from("profiles")
         .select("*")
@@ -366,6 +382,8 @@ const Dashboard = () => {
       eliminado: { color: "text-red-500", label: "Eliminado" },
       teste_1: { color: "text-orange-500", label: "Teste 1" },
       teste_2: { color: "text-orange-500", label: "Teste 2" },
+      teste_1_sc: { color: "text-orange-500", label: "Teste 1 (SC)" },
+      teste_2_sc: { color: "text-orange-500", label: "Teste 2 (SC)" },
       sim_rem: { color: "text-green-500", label: "Simulador Rem." },
       ativo: { color: "text-blue-500", label: "Ativo" },
       pausado: { color: "text-gray-500", label: "Pausado" },
@@ -382,6 +400,20 @@ const Dashboard = () => {
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
+  }
+
+  // Bloquear acesso mobile
+  if (isMobile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="text-center space-y-4">
+          <h1 className="text-2xl font-bold text-foreground">Dispositivo não suportado</h1>
+          <p className="text-foreground/70 max-w-md">
+            O painel do trader não está disponível em dispositivos móveis, acesse pelo computador.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -610,14 +642,20 @@ const Dashboard = () => {
                 {/* Buttons on the right - SEMPRE VISÍVEIS */}
                 <div className="flex gap-3">
                   <div className="flex flex-col items-start">
-                    <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8">
+                    <Button 
+                      onClick={() => window.open(profitOneLink, "_blank")}
+                      className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8"
+                    >
                       ATIVAR PROFIT ONE
                     </Button>
                     <p className="text-[22px] font-bold text-foreground mt-2">R$ 90,00 por mês</p>
                     <p className="text-xs text-foreground/70">Primeiro mês grátis para novos usuários</p>
                   </div>
                   <div className="flex flex-col items-start">
-                    <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8">
+                    <Button 
+                      onClick={() => window.open(profitProLink, "_blank")}
+                      className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8"
+                    >
                       ATIVAR PROFIT PRO
                     </Button>
                     <p className="text-[22px] font-bold text-foreground mt-2">R$ 220,00 por mês</p>

@@ -149,6 +149,30 @@ export type Database = {
           },
         ]
       }
+      platform_config: {
+        Row: {
+          config_key: string
+          config_value: string
+          created_at: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          config_key: string
+          config_value: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          config_key?: string
+          config_value?: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           cep: string | null
@@ -382,6 +406,8 @@ export type Database = {
         | "sim_rem"
         | "ativo"
         | "pausado"
+        | "teste_1_sc"
+        | "teste_2_sc"
       withdrawal_type: "mensal" | "quinzenal"
     }
     CompositeTypes: {
@@ -518,6 +544,8 @@ export const Constants = {
         "sim_rem",
         "ativo",
         "pausado",
+        "teste_1_sc",
+        "teste_2_sc",
       ],
       withdrawal_type: ["mensal", "quinzenal"],
     },
