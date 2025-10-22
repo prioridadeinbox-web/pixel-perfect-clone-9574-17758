@@ -1,1 +1,4 @@
-project_id = "zelqxxlqptmapkuaseix"
+project_id = "acodxjpalsaixkbnvwso"
+
+[functions.setup-admin]
+verify_jwt = false
