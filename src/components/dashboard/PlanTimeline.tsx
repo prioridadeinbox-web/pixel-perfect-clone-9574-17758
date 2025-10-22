@@ -3,6 +3,7 @@ import { Paperclip, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 interface TimelineEntry {
   id: string;
@@ -59,10 +60,11 @@ export const PlanTimeline = ({ entries }: PlanTimelineProps) => {
 
         if (!cancelled) {
           if (error) {
-            console.error('Erro ao criar signed URL:', error);
-            setSignedUrl(currentDocUrl);
+            console.error('Erro ao criar signed URL:', error, 'path:', path);
+            setSignedUrl('');
+            toast.error('Anexo não encontrado ou indisponível.');
           } else {
-            setSignedUrl(data?.signedUrl || currentDocUrl);
+            setSignedUrl(data?.signedUrl || '');
           }
         }
       } catch (error) {
