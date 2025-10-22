@@ -125,6 +125,21 @@ const Dashboard = () => {
     await loadUserData(userId);
   };
 
+  // Normaliza a URL adicionando https:// se necessário
+  const normalizeUrl = (url: string): string => {
+    if (!url || url.trim() === "" || url === "#") return "#";
+    
+    const trimmedUrl = url.trim();
+    
+    // Se já tem protocolo, retorna como está
+    if (trimmedUrl.startsWith("http://") || trimmedUrl.startsWith("https://")) {
+      return trimmedUrl;
+    }
+    
+    // Adiciona https:// automaticamente
+    return `https://${trimmedUrl}`;
+  };
+
   const loadUserData = async (userId: string) => {
     try {
       // Carregar links de ativação
@@ -136,8 +151,9 @@ const Dashboard = () => {
       const oneLink = configData?.find(c => c.config_key === "profit_one_link");
       const proLink = configData?.find(c => c.config_key === "profit_pro_link");
       
-      setProfitOneLink(oneLink?.config_value || "#");
-      setProfitProLink(proLink?.config_value || "#");
+      // Normaliza os links ao carregar
+      setProfitOneLink(normalizeUrl(oneLink?.config_value || "#"));
+      setProfitProLink(normalizeUrl(proLink?.config_value || "#"));
 
       const { data: profileData } = await supabase
         .from("profiles")
