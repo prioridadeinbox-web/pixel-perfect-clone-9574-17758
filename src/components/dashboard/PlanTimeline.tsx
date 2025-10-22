@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Eye } from "lucide-react";
-import { DocumentViewer } from "@/components/shared/DocumentViewer";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { SignedImage } from "@/components/dashboard/SignedImage";
 
 interface TimelineEntry {
   id: string;
@@ -118,7 +121,22 @@ export const PlanTimeline = ({ entries }: PlanTimelineProps) => {
         );
       })}
 
-      <DocumentViewer open={viewerOpen} onOpenChange={setViewerOpen} url={currentDocUrl} />
+      {/* Dialog idêntico ao admin */}
+      <Dialog open={viewerOpen} onOpenChange={setViewerOpen}>
+        <DialogContent className="sm:max-w-3xl" aria-describedby="dialog-description">
+          <DialogHeader>
+            <DialogTitle>Visualizar Comprovante</DialogTitle>
+            <DialogDescription>
+              Visualização do documento anexado
+            </DialogDescription>
+          </DialogHeader>
+          <div id="dialog-description" className="w-full max-h-[600px] overflow-auto bg-muted rounded-lg p-4">
+            {currentDocUrl ? (
+              <SignedImage pathOrUrl={currentDocUrl} />
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
