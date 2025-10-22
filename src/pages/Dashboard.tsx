@@ -35,6 +35,9 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [profitOneLink, setProfitOneLink] = useState("");
   const [profitProLink, setProfitProLink] = useState("");
+  const [comprarPlanoLink, setComprarPlanoLink] = useState("");
+  const [contatarSuporteLink, setContatarSuporteLink] = useState("");
+  const [voltarSiteLink, setVoltarSiteLink] = useState("");
   const [activeDialog, setActiveDialog] = useState<{
     type: 'withdrawal' | 'biweekly' | 'secondChance' | 'comments' | 'approval' | null;
     planId: string;
@@ -146,14 +149,26 @@ const Dashboard = () => {
       const { data: configData } = await supabase
         .from("platform_config")
         .select("*")
-        .in("config_key", ["profit_one_link", "profit_pro_link"]);
+        .in("config_key", [
+          "profit_one_link", 
+          "profit_pro_link",
+          "comprar_plano_link",
+          "contatar_suporte_link",
+          "voltar_site_link"
+        ]);
 
       const oneLink = configData?.find(c => c.config_key === "profit_one_link");
       const proLink = configData?.find(c => c.config_key === "profit_pro_link");
+      const comprarLink = configData?.find(c => c.config_key === "comprar_plano_link");
+      const suporteLink = configData?.find(c => c.config_key === "contatar_suporte_link");
+      const voltarLink = configData?.find(c => c.config_key === "voltar_site_link");
       
       // Normaliza os links ao carregar
       setProfitOneLink(normalizeUrl(oneLink?.config_value || "#"));
       setProfitProLink(normalizeUrl(proLink?.config_value || "#"));
+      setComprarPlanoLink(normalizeUrl(comprarLink?.config_value || "/"));
+      setContatarSuporteLink(normalizeUrl(suporteLink?.config_value || "https://wa.me/5512987072587"));
+      setVoltarSiteLink(normalizeUrl(voltarLink?.config_value || "/"));
 
       const { data: profileData } = await supabase
         .from("profiles")
@@ -223,15 +238,15 @@ const Dashboard = () => {
   };
 
   const handleBackToSite = () => {
-    window.location.href = "/";
+    window.location.href = voltarSiteLink;
   };
 
   const handleContratarPlano = () => {
-    window.location.href = "/";
+    window.location.href = comprarPlanoLink;
   };
 
   const handleContatarSuporte = () => {
-    window.open("https://wa.me/5512987072587", "_blank");
+    window.open(contatarSuporteLink, "_blank");
   };
 
   const openDialog = (type: 'withdrawal' | 'biweekly' | 'secondChance' | 'comments' | 'approval', planId: string) => {

@@ -10,6 +10,9 @@ import { Link } from "lucide-react";
 export const PlatformLinksConfig = () => {
   const [profitOneLink, setProfitOneLink] = useState("");
   const [profitProLink, setProfitProLink] = useState("");
+  const [comprarPlanoLink, setComprarPlanoLink] = useState("");
+  const [contatarSuporteLink, setContatarSuporteLink] = useState("");
+  const [voltarSiteLink, setVoltarSiteLink] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -22,15 +25,27 @@ export const PlatformLinksConfig = () => {
       const { data, error } = await supabase
         .from("platform_config")
         .select("*")
-        .in("config_key", ["profit_one_link", "profit_pro_link"]);
+        .in("config_key", [
+          "profit_one_link", 
+          "profit_pro_link",
+          "comprar_plano_link",
+          "contatar_suporte_link",
+          "voltar_site_link"
+        ]);
 
       if (error) throw error;
 
       const oneLink = data?.find(c => c.config_key === "profit_one_link");
       const proLink = data?.find(c => c.config_key === "profit_pro_link");
+      const comprarLink = data?.find(c => c.config_key === "comprar_plano_link");
+      const suporteLink = data?.find(c => c.config_key === "contatar_suporte_link");
+      const voltarLink = data?.find(c => c.config_key === "voltar_site_link");
 
       setProfitOneLink(oneLink?.config_value || "");
       setProfitProLink(proLink?.config_value || "");
+      setComprarPlanoLink(comprarLink?.config_value || "");
+      setContatarSuporteLink(suporteLink?.config_value || "");
+      setVoltarSiteLink(voltarLink?.config_value || "");
     } catch (error: any) {
       toast.error("Erro ao carregar links: " + error.message);
     } finally {
@@ -59,6 +74,9 @@ export const PlatformLinksConfig = () => {
       // Normaliza as URLs antes de salvar
       const normalizedProfitOne = normalizeUrl(profitOneLink);
       const normalizedProfitPro = normalizeUrl(profitProLink);
+      const normalizedComprarPlano = normalizeUrl(comprarPlanoLink);
+      const normalizedContatarSuporte = normalizeUrl(contatarSuporteLink);
+      const normalizedVoltarSite = normalizeUrl(voltarSiteLink);
 
       const updates = [
         {
@@ -68,6 +86,18 @@ export const PlatformLinksConfig = () => {
         {
           config_key: "profit_pro_link",
           config_value: normalizedProfitPro,
+        },
+        {
+          config_key: "comprar_plano_link",
+          config_value: normalizedComprarPlano,
+        },
+        {
+          config_key: "contatar_suporte_link",
+          config_value: normalizedContatarSuporte,
+        },
+        {
+          config_key: "voltar_site_link",
+          config_value: normalizedVoltarSite,
         },
       ];
 
@@ -82,6 +112,9 @@ export const PlatformLinksConfig = () => {
       // Atualiza os estados com as URLs normalizadas
       setProfitOneLink(normalizedProfitOne);
       setProfitProLink(normalizedProfitPro);
+      setComprarPlanoLink(normalizedComprarPlano);
+      setContatarSuporteLink(normalizedContatarSuporte);
+      setVoltarSiteLink(normalizedVoltarSite);
 
       toast.success("Links atualizados com sucesso!");
     } catch (error: any) {
@@ -117,7 +150,7 @@ export const PlatformLinksConfig = () => {
           </p>
         </div>
 
-        <div className="space-y-2">
+      <div className="space-y-2">
           <Label htmlFor="profitPro">Link do botão "ATIVAR PROFIT PRO"</Label>
           <Input
             id="profitPro"
@@ -125,6 +158,48 @@ export const PlatformLinksConfig = () => {
             placeholder="youtube.com ou https://exemplo.com/profit-pro"
             value={profitProLink}
             onChange={(e) => setProfitProLink(e.target.value)}
+          />
+          <p className="text-xs text-muted-foreground">
+            Pode digitar com ou sem https:// (será adicionado automaticamente)
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="comprarPlano">Link do botão "COMPRAR UM PLANO"</Label>
+          <Input
+            id="comprarPlano"
+            type="text"
+            placeholder="youtube.com ou https://exemplo.com/planos"
+            value={comprarPlanoLink}
+            onChange={(e) => setComprarPlanoLink(e.target.value)}
+          />
+          <p className="text-xs text-muted-foreground">
+            Pode digitar com ou sem https:// (será adicionado automaticamente)
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="contatarSuporte">Link do botão "CONTATAR SUPORTE"</Label>
+          <Input
+            id="contatarSuporte"
+            type="text"
+            placeholder="wa.me/5511999999999 ou https://exemplo.com/suporte"
+            value={contatarSuporteLink}
+            onChange={(e) => setContatarSuporteLink(e.target.value)}
+          />
+          <p className="text-xs text-muted-foreground">
+            Pode digitar com ou sem https:// (será adicionado automaticamente)
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="voltarSite">Link do botão "Voltar para o site"</Label>
+          <Input
+            id="voltarSite"
+            type="text"
+            placeholder="exemplo.com ou https://exemplo.com"
+            value={voltarSiteLink}
+            onChange={(e) => setVoltarSiteLink(e.target.value)}
           />
           <p className="text-xs text-muted-foreground">
             Pode digitar com ou sem https:// (será adicionado automaticamente)
