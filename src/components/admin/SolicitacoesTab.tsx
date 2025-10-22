@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Upload, Search, RefreshCw } from "lucide-react";
+import { Upload, Search, RefreshCw, Eye, X, Paperclip } from "lucide-react";
 
 interface Solicitacao {
   id: string;
@@ -41,6 +41,8 @@ export const SolicitacoesTab = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [observacaoTimeline, setObservacaoTimeline] = useState("");
+  const [viewingDocument, setViewingDocument] = useState(false);
+  const [signedUrl, setSignedUrl] = useState("");
 
   useEffect(() => {
     loadSolicitacoes();
@@ -132,8 +134,40 @@ export const SolicitacoesTab = () => {
     setStatus("pendente");
     setComprovanteUrl("");
     setObservacaoTimeline("");
+    setSignedUrl("");
     setDialogOpen(true);
   };
+
+  const handleViewDocument = async () => {
+    if (!comprovanteUrl) return;
+
+    try {
+      const path = comprovanteUrl.includes('/documentos/')
+        ? comprovanteUrl.split('/documentos/')[1]
+        : comprovanteUrl;
+
+      const { data } = await supabase.storage
+        .from('documentos')
+        .createSignedUrl(path, 60 * 30); // 30 minutos
+
+      setSignedUrl(data?.signedUrl || comprovanteUrl);
+      setViewingDocument(true);
+    } catch (error) {
+      setSignedUrl(comprovanteUrl);
+      setViewingDocument(true);
+    }
+  };
+
+  const handleRemoveDocument = () => {
+    setComprovanteUrl("");
+    setSignedUrl("");
+    toast.success("Comprovante removido");
+  };
+
+  const getPath = (url: string) =>
+    url.includes('/documentos/') ? url.split('/documentos/')[1] : url;
+
+  const isPdf = (url: string) => getPath(url).toLowerCase().endsWith('.pdf');
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -431,7 +465,49 @@ export const SolicitacoesTab = () => {
                   </datalist>
                 </div>
 
-                <Button 
+                <div>
+                  <Label>Comprovante (opcional)</Label>
+                  {!comprovanteUrl ? (
+                    <div className="flex gap-2 mt-2">
+                      <label className="flex-1 cursor-pointer">
+                        <div className="flex items-center gap-2 px-4 py-2 border rounded-md hover:bg-accent transition-colors">
+                          <Paperclip className="w-4 h-4" />
+                          <span className="text-sm">Anexar arquivo</span>
+                        </div>
+                        <input
+                          type="file"
+                          onChange={handleFileUpload}
+                          disabled={uploading}
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          className="hidden"
+                        />
+                      </label>
+                      {uploading && <span className="text-sm text-muted-foreground">Enviando...</span>}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 p-3 bg-muted rounded-lg mt-2">
+                      <p className="text-sm text-primary flex-1">✓ Comprovante anexado</p>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleViewDocument}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleRemoveDocument}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                <Button
                   onClick={handleUpdateSolicitacao} 
                   disabled={updating}
                   className="w-full"
@@ -440,6 +516,33 @@ export const SolicitacoesTab = () => {
                 </Button>
               </>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de visualização do comprovante */}
+      <Dialog open={viewingDocument} onOpenChange={setViewingDocument}>
+        <DialogContent className="sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Visualizar Comprovante</DialogTitle>
+          </DialogHeader>
+          <div className="w-full max-h-[600px] overflow-auto bg-muted rounded-lg p-4">
+            {comprovanteUrl && isPdf(comprovanteUrl) ? (
+              <div className="p-4 flex flex-col items-center gap-4">
+                <p className="text-sm text-muted-foreground">Arquivo PDF</p>
+                <Button asChild>
+                  <a href={signedUrl || comprovanteUrl} target="_blank" rel="noopener noreferrer">
+                    Abrir PDF em nova guia
+                  </a>
+                </Button>
+              </div>
+            ) : comprovanteUrl ? (
+              <img
+                src={signedUrl || comprovanteUrl}
+                alt="Comprovante"
+                className="w-full h-auto object-contain"
+              />
+            ) : null}
           </div>
         </DialogContent>
       </Dialog>
