@@ -251,8 +251,8 @@ export const TraderManagementTab = () => {
                   : "bg-muted hover:bg-muted/80"
               }`}
             >
-              <div className="font-medium">{trader.nome}</div>
-              <div className="text-sm opacity-80">{trader.email}</div>
+              <div className="font-medium truncate">{trader.nome}</div>
+              <div className="text-sm opacity-80 truncate">{trader.email}</div>
             </div>
           ))}
         </div>
