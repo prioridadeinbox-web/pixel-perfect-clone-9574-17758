@@ -25,8 +25,18 @@ export const PlanTimeline = ({ entries }: PlanTimelineProps) => {
   const [signedUrl, setSignedUrl] = useState('');
   const [currentDocUrl, setCurrentDocUrl] = useState('');
 
-  const getPath = (value: string) =>
-    value.includes('/documentos/') ? value.split('/documentos/')[1] : value;
+  const getPath = (value: string) => {
+    // Se for uma URL pública antiga, extrair o path
+    if (value.includes('/public/documentos/')) {
+      return value.split('/public/documentos/')[1];
+    }
+    // Se for uma URL com signed, extrair o path
+    if (value.includes('/documentos/')) {
+      return value.split('/documentos/')[1];
+    }
+    // Se já for apenas o path
+    return value;
+  };
   
   const isPdf = (value: string) => getPath(value).toLowerCase().endsWith('.pdf');
 
