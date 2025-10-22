@@ -99,13 +99,24 @@ DROP TYPE IF EXISTS public.app_role CASCADE;
 -- FASE 2: RECRIAÇÃO COMPLETA DO BANCO
 -- =====================================================
 
--- TIPOS ENUMERADOS
-CREATE TYPE public.app_role AS ENUM ('admin', 'cliente', 'superadmin');
-CREATE TYPE public.plan_status AS ENUM ('ativo', 'pausado', 'concluido', 'cancelado', 'teste_1_sc', 'teste_2_sc');
-CREATE TYPE public.withdrawal_type AS ENUM ('mensal', 'quinzenal');
+-- TIPOS ENUMERADOS (protegido com DO $$)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'app_role') THEN
+    CREATE TYPE public.app_role AS ENUM ('admin', 'cliente', 'superadmin');
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'plan_status') THEN
+    CREATE TYPE public.plan_status AS ENUM ('ativo', 'pausado', 'concluido', 'cancelado', 'teste_1_sc', 'teste_2_sc');
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'withdrawal_type') THEN
+    CREATE TYPE public.withdrawal_type AS ENUM ('mensal', 'quinzenal');
+  END IF;
+END $$;
 
--- TABELAS
-CREATE TABLE public.profiles (
+-- TABELAS (protegidas com IF NOT EXISTS)
+CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   nome TEXT NOT NULL,
   email TEXT NOT NULL,
@@ -126,7 +137,7 @@ CREATE TABLE public.profiles (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
-CREATE TABLE public.user_roles (
+CREATE TABLE IF NOT EXISTS public.user_roles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   role public.app_role NOT NULL,
@@ -134,7 +145,7 @@ CREATE TABLE public.user_roles (
   UNIQUE(user_id, role)
 );
 
-CREATE TABLE public.planos (
+CREATE TABLE IF NOT EXISTS public.planos (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   nome_plano TEXT NOT NULL,
   descricao TEXT,
@@ -143,7 +154,7 @@ CREATE TABLE public.planos (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
-CREATE TABLE public.planos_adquiridos (
+CREATE TABLE IF NOT EXISTS public.planos_adquiridos (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   cliente_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   plano_id UUID NOT NULL REFERENCES public.planos(id) ON DELETE CASCADE,
@@ -155,7 +166,7 @@ CREATE TABLE public.planos_adquiridos (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
-CREATE TABLE public.solicitacoes (
+CREATE TABLE IF NOT EXISTS public.solicitacoes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   plano_adquirido_id UUID REFERENCES public.planos_adquiridos(id) ON DELETE SET NULL,
@@ -169,7 +180,7 @@ CREATE TABLE public.solicitacoes (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
-CREATE TABLE public.historico_observacoes (
+CREATE TABLE IF NOT EXISTS public.historico_observacoes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   plano_adquirido_id UUID NOT NULL REFERENCES public.planos_adquiridos(id) ON DELETE CASCADE,
   solicitacao_id UUID REFERENCES public.solicitacoes(id) ON DELETE SET NULL,
@@ -183,7 +194,7 @@ CREATE TABLE public.historico_observacoes (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
-CREATE TABLE public.user_documents (
+CREATE TABLE IF NOT EXISTS public.user_documents (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   tipo_documento TEXT NOT NULL,
@@ -193,14 +204,14 @@ CREATE TABLE public.user_documents (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
-CREATE TABLE public.system_logs (
+CREATE TABLE IF NOT EXISTS public.system_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   log_data JSONB NOT NULL,
   expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
 
-CREATE TABLE public.platform_config (
+CREATE TABLE IF NOT EXISTS public.platform_config (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   config_key TEXT UNIQUE NOT NULL,
   config_value TEXT NOT NULL,
@@ -208,15 +219,15 @@ CREATE TABLE public.platform_config (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
--- ÍNDICES
-CREATE INDEX idx_user_roles_user_id ON public.user_roles(user_id);
-CREATE INDEX idx_user_roles_role ON public.user_roles(role);
-CREATE INDEX idx_planos_adquiridos_cliente_id ON public.planos_adquiridos(cliente_id);
-CREATE INDEX idx_solicitacoes_user_id ON public.solicitacoes(user_id);
-CREATE INDEX idx_solicitacoes_status ON public.solicitacoes(status);
-CREATE INDEX idx_historico_plano_adquirido_id ON public.historico_observacoes(plano_adquirido_id);
-CREATE INDEX idx_user_documents_user_id ON public.user_documents(user_id);
-CREATE INDEX idx_system_logs_expires_at ON public.system_logs(expires_at);
+-- ÍNDICES (protegidos com IF NOT EXISTS)
+CREATE INDEX IF NOT EXISTS idx_user_roles_user_id ON public.user_roles(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_roles_role ON public.user_roles(role);
+CREATE INDEX IF NOT EXISTS idx_planos_adquiridos_cliente_id ON public.planos_adquiridos(cliente_id);
+CREATE INDEX IF NOT EXISTS idx_solicitacoes_user_id ON public.solicitacoes(user_id);
+CREATE INDEX IF NOT EXISTS idx_solicitacoes_status ON public.solicitacoes(status);
+CREATE INDEX IF NOT EXISTS idx_historico_plano_adquirido_id ON public.historico_observacoes(plano_adquirido_id);
+CREATE INDEX IF NOT EXISTS idx_user_documents_user_id ON public.user_documents(user_id);
+CREATE INDEX IF NOT EXISTS idx_system_logs_expires_at ON public.system_logs(expires_at);
 
 -- FUNÇÕES
 CREATE OR REPLACE FUNCTION public.has_role(_user_id UUID, _role public.app_role)
@@ -394,58 +405,69 @@ BEGIN
 END;
 $$;
 
--- TRIGGERS
+-- TRIGGERS (recriados com proteção)
+DROP TRIGGER IF EXISTS update_profiles_updated_at ON public.profiles;
 CREATE TRIGGER update_profiles_updated_at
   BEFORE UPDATE ON public.profiles
   FOR EACH ROW
   EXECUTE FUNCTION public.update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_planos_updated_at ON public.planos;
 CREATE TRIGGER update_planos_updated_at
   BEFORE UPDATE ON public.planos
   FOR EACH ROW
   EXECUTE FUNCTION public.update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_planos_adquiridos_updated_at ON public.planos_adquiridos;
 CREATE TRIGGER update_planos_adquiridos_updated_at
   BEFORE UPDATE ON public.planos_adquiridos
   FOR EACH ROW
   EXECUTE FUNCTION public.update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_solicitacoes_updated_at ON public.solicitacoes;
 CREATE TRIGGER update_solicitacoes_updated_at
   BEFORE UPDATE ON public.solicitacoes
   FOR EACH ROW
   EXECUTE FUNCTION public.update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_user_documents_updated_at ON public.user_documents;
 CREATE TRIGGER update_user_documents_updated_at
   BEFORE UPDATE ON public.user_documents
   FOR EACH ROW
   EXECUTE FUNCTION public.update_updated_at_column();
 
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_new_user();
 
+DROP TRIGGER IF EXISTS sync_platform_status_trigger ON public.profiles;
 CREATE TRIGGER sync_platform_status_trigger
   BEFORE INSERT OR UPDATE ON public.profiles
   FOR EACH ROW
   EXECUTE FUNCTION public.sync_platform_status();
 
+DROP TRIGGER IF EXISTS create_timeline_on_request ON public.solicitacoes;
 CREATE TRIGGER create_timeline_on_request
   AFTER INSERT ON public.solicitacoes
   FOR EACH ROW
   EXECUTE FUNCTION public.create_timeline_entry_on_request();
 
+DROP TRIGGER IF EXISTS update_timeline_on_request ON public.solicitacoes;
 CREATE TRIGGER update_timeline_on_request
   AFTER UPDATE ON public.solicitacoes
   FOR EACH ROW
   WHEN (OLD.status IS DISTINCT FROM NEW.status OR OLD.resposta_admin IS DISTINCT FROM NEW.resposta_admin)
   EXECUTE FUNCTION public.update_timeline_entry_on_request();
 
+DROP TRIGGER IF EXISTS audit_profile_updates ON public.profiles;
 CREATE TRIGGER audit_profile_updates
   AFTER UPDATE ON public.profiles
   FOR EACH ROW
   EXECUTE FUNCTION public.audit_profile_access();
 
+DROP TRIGGER IF EXISTS log_role_changes_trigger ON public.user_roles;
 CREATE TRIGGER log_role_changes_trigger
   AFTER INSERT OR UPDATE OR DELETE ON public.user_roles
   FOR EACH ROW
@@ -462,94 +484,115 @@ ALTER TABLE public.user_documents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.system_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.platform_config ENABLE ROW LEVEL SECURITY;
 
--- POLICIES - PROFILES
+-- POLICIES - PROFILES (recriadas com proteção)
+DROP POLICY IF EXISTS "profiles_select_policy" ON public.profiles;
 CREATE POLICY "profiles_select_policy" ON public.profiles
   FOR SELECT
   USING (auth.uid() = id OR public.has_role(auth.uid(), 'admin'));
 
+DROP POLICY IF EXISTS "profiles_insert_policy" ON public.profiles;
 CREATE POLICY "profiles_insert_policy" ON public.profiles
   FOR INSERT
   WITH CHECK (public.has_role(auth.uid(), 'admin'));
 
+DROP POLICY IF EXISTS "profiles_update_policy" ON public.profiles;
 CREATE POLICY "profiles_update_policy" ON public.profiles
   FOR UPDATE
   USING (auth.uid() = id OR public.has_role(auth.uid(), 'admin'))
   WITH CHECK (auth.uid() = id OR public.has_role(auth.uid(), 'admin'));
 
+DROP POLICY IF EXISTS "profiles_delete_policy" ON public.profiles;
 CREATE POLICY "profiles_delete_policy" ON public.profiles
   FOR DELETE
   USING (public.has_role(auth.uid(), 'admin'));
 
--- POLICIES - USER_ROLES
+-- POLICIES - USER_ROLES (recriadas com proteção)
+DROP POLICY IF EXISTS "Users can view their own roles" ON public.user_roles;
 CREATE POLICY "Users can view their own roles" ON public.user_roles
   FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Admins can view all roles" ON public.user_roles;
 CREATE POLICY "Admins can view all roles" ON public.user_roles
   FOR SELECT
   USING (public.has_role(auth.uid(), 'admin'));
 
+DROP POLICY IF EXISTS "Only admins can insert roles" ON public.user_roles;
 CREATE POLICY "Only admins can insert roles" ON public.user_roles
   FOR INSERT
   WITH CHECK (public.has_role(auth.uid(), 'admin') AND auth.uid() <> user_id);
 
+DROP POLICY IF EXISTS "Only admins can update OTHER users roles" ON public.user_roles;
 CREATE POLICY "Only admins can update OTHER users roles" ON public.user_roles
   FOR UPDATE
   USING (public.has_role(auth.uid(), 'admin') AND auth.uid() <> user_id)
   WITH CHECK (public.has_role(auth.uid(), 'admin') AND auth.uid() <> user_id);
 
+DROP POLICY IF EXISTS "Only admins can delete roles" ON public.user_roles;
 CREATE POLICY "Only admins can delete roles" ON public.user_roles
   FOR DELETE
   USING (public.has_role(auth.uid(), 'admin') AND auth.uid() <> user_id);
 
--- POLICIES - PLANOS
+-- POLICIES - PLANOS (recriadas com proteção)
+DROP POLICY IF EXISTS "Authenticated users can view planos" ON public.planos;
 CREATE POLICY "Authenticated users can view planos" ON public.planos
   FOR SELECT
   USING (auth.uid() IS NOT NULL);
 
+DROP POLICY IF EXISTS "Admins can manage planos" ON public.planos;
 CREATE POLICY "Admins can manage planos" ON public.planos
   FOR ALL
   USING (public.has_role(auth.uid(), 'admin'));
 
--- POLICIES - PLANOS_ADQUIRIDOS
+-- POLICIES - PLANOS_ADQUIRIDOS (recriadas com proteção)
+DROP POLICY IF EXISTS "Users can view their own planos" ON public.planos_adquiridos;
 CREATE POLICY "Users can view their own planos" ON public.planos_adquiridos
   FOR SELECT
   USING (auth.uid() = cliente_id);
 
+DROP POLICY IF EXISTS "Admins can view all planos_adquiridos" ON public.planos_adquiridos;
 CREATE POLICY "Admins can view all planos_adquiridos" ON public.planos_adquiridos
   FOR SELECT
   USING (public.has_role(auth.uid(), 'admin'));
 
+DROP POLICY IF EXISTS "Admins can insert planos_adquiridos" ON public.planos_adquiridos;
 CREATE POLICY "Admins can insert planos_adquiridos" ON public.planos_adquiridos
   FOR INSERT
   WITH CHECK (public.has_role(auth.uid(), 'admin'));
 
+DROP POLICY IF EXISTS "Admins can update planos_adquiridos" ON public.planos_adquiridos;
 CREATE POLICY "Admins can update planos_adquiridos" ON public.planos_adquiridos
   FOR UPDATE
   USING (public.has_role(auth.uid(), 'admin'));
 
+DROP POLICY IF EXISTS "Admins can delete planos_adquiridos" ON public.planos_adquiridos;
 CREATE POLICY "Admins can delete planos_adquiridos" ON public.planos_adquiridos
   FOR DELETE
   USING (public.has_role(auth.uid(), 'admin'));
 
--- POLICIES - SOLICITACOES
+-- POLICIES - SOLICITACOES (recriadas com proteção)
+DROP POLICY IF EXISTS "Users can view their own requests" ON public.solicitacoes;
 CREATE POLICY "Users can view their own requests" ON public.solicitacoes
   FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can create their own requests" ON public.solicitacoes;
 CREATE POLICY "Users can create their own requests" ON public.solicitacoes
   FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Admins can view all requests" ON public.solicitacoes;
 CREATE POLICY "Admins can view all requests" ON public.solicitacoes
   FOR SELECT
   USING (public.has_role(auth.uid(), 'admin'));
 
+DROP POLICY IF EXISTS "Admins can update all requests" ON public.solicitacoes;
 CREATE POLICY "Admins can update all requests" ON public.solicitacoes
   FOR UPDATE
   USING (public.has_role(auth.uid(), 'admin'));
 
--- POLICIES - HISTORICO_OBSERVACOES
+-- POLICIES - HISTORICO_OBSERVACOES (recriadas com proteção)
+DROP POLICY IF EXISTS "Users can view their plan history" ON public.historico_observacoes;
 CREATE POLICY "Users can view their plan history" ON public.historico_observacoes
   FOR SELECT
   USING (EXISTS (
@@ -558,6 +601,7 @@ CREATE POLICY "Users can view their plan history" ON public.historico_observacoe
     AND planos_adquiridos.cliente_id = auth.uid()
   ));
 
+DROP POLICY IF EXISTS "Users can create history for their plans" ON public.historico_observacoes;
 CREATE POLICY "Users can create history for their plans" ON public.historico_observacoes
   FOR INSERT
   WITH CHECK (EXISTS (
@@ -566,40 +610,49 @@ CREATE POLICY "Users can create history for their plans" ON public.historico_obs
     AND planos_adquiridos.cliente_id = auth.uid()
   ));
 
+DROP POLICY IF EXISTS "Admins can view all history" ON public.historico_observacoes;
 CREATE POLICY "Admins can view all history" ON public.historico_observacoes
   FOR SELECT
   USING (public.has_role(auth.uid(), 'admin'));
 
+DROP POLICY IF EXISTS "Admins can manage all history" ON public.historico_observacoes;
 CREATE POLICY "Admins can manage all history" ON public.historico_observacoes
   FOR ALL
   USING (public.has_role(auth.uid(), 'admin'));
 
--- POLICIES - USER_DOCUMENTS
+-- POLICIES - USER_DOCUMENTS (recriadas com proteção)
+DROP POLICY IF EXISTS "Users can view their own documents" ON public.user_documents;
 CREATE POLICY "Users can view their own documents" ON public.user_documents
   FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can upload their own documents" ON public.user_documents;
 CREATE POLICY "Users can upload their own documents" ON public.user_documents
   FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own documents" ON public.user_documents;
 CREATE POLICY "Users can update their own documents" ON public.user_documents
   FOR UPDATE
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete their own documents" ON public.user_documents;
 CREATE POLICY "Users can delete their own documents" ON public.user_documents
   FOR DELETE
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Admins can view all documents" ON public.user_documents;
 CREATE POLICY "Admins can view all documents" ON public.user_documents
   FOR SELECT
   USING (public.has_role(auth.uid(), 'admin'));
 
+DROP POLICY IF EXISTS "Admins can update all documents" ON public.user_documents;
 CREATE POLICY "Admins can update all documents" ON public.user_documents
   FOR UPDATE
   USING (public.has_role(auth.uid(), 'admin'));
 
--- POLICIES - SYSTEM_LOGS
+-- POLICIES - SYSTEM_LOGS (recriadas com proteção)
+DROP POLICY IF EXISTS "Admins can view all logs" ON public.system_logs;
 CREATE POLICY "Admins can view all logs" ON public.system_logs
   FOR SELECT
   USING (EXISTS (
@@ -608,7 +661,8 @@ CREATE POLICY "Admins can view all logs" ON public.system_logs
     AND user_roles.role = 'admin'
   ));
 
--- POLICIES - PLATFORM_CONFIG
+-- POLICIES - PLATFORM_CONFIG (recriadas com proteção)
+DROP POLICY IF EXISTS "Admins can view platform_config" ON public.platform_config;
 CREATE POLICY "Admins can view platform_config" ON public.platform_config
   FOR SELECT
   USING (EXISTS (
@@ -617,6 +671,7 @@ CREATE POLICY "Admins can view platform_config" ON public.platform_config
     AND user_roles.role = 'admin'
   ));
 
+DROP POLICY IF EXISTS "Admins can manage platform_config" ON public.platform_config;
 CREATE POLICY "Admins can manage platform_config" ON public.platform_config
   FOR ALL
   USING (EXISTS (
@@ -625,6 +680,7 @@ CREATE POLICY "Admins can manage platform_config" ON public.platform_config
     AND user_roles.role = 'admin'
   ));
 
+DROP POLICY IF EXISTS "Users can view platform_config" ON public.platform_config;
 CREATE POLICY "Users can view platform_config" ON public.platform_config
   FOR SELECT
   USING (auth.uid() IS NOT NULL);
