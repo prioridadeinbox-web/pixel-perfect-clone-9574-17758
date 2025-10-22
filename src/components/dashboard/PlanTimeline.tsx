@@ -1,9 +1,6 @@
-import { useState, useEffect } from "react";
-import { Paperclip, Eye } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { toast } from "sonner";
+import { useState } from "react";
+import { Eye } from "lucide-react";
+import { DocumentViewer } from "@/components/shared/DocumentViewer";
 
 interface TimelineEntry {
   id: string;
@@ -22,63 +19,8 @@ interface PlanTimelineProps {
 }
 
 export const PlanTimeline = ({ entries }: PlanTimelineProps) => {
-  const [viewingDocument, setViewingDocument] = useState(false);
-  const [signedUrl, setSignedUrl] = useState('');
-  const [currentDocUrl, setCurrentDocUrl] = useState('');
-
-  const getPath = (value: string) => {
-    // Se for uma URL pública antiga, extrair o path
-    if (value.includes('/public/documentos/')) {
-      return value.split('/public/documentos/')[1];
-    }
-    // Se for uma URL com signed, extrair o path
-    if (value.includes('/documentos/')) {
-      return value.split('/documentos/')[1];
-    }
-    // Se já for apenas o path
-    return value;
-  };
-  
-  const isPdf = (value: string) => getPath(value).toLowerCase().endsWith('.pdf');
-  const isAbsoluteUrl = (value: string) => /^https?:\/\//i.test(value);
-
-  // Criar signed URL quando o dialog abre
-  useEffect(() => {
-    if (!viewingDocument || !currentDocUrl) {
-      setSignedUrl('');
-      return;
-    }
-
-    let cancelled = false;
-    
-    (async () => {
-      try {
-        const path = getPath(currentDocUrl);
-        const { data, error } = await supabase.storage
-          .from('documentos')
-          .createSignedUrl(path, 60 * 30); // 30 minutos
-
-        if (!cancelled) {
-          if (error) {
-            console.error('Erro ao criar signed URL:', error, 'path:', path);
-            setSignedUrl('');
-            toast.error('Anexo não encontrado ou indisponível.');
-          } else {
-            setSignedUrl(data?.signedUrl || '');
-          }
-        }
-      } catch (error) {
-        console.error('Erro geral ao visualizar documento:', error);
-        if (!cancelled) {
-          setSignedUrl(currentDocUrl);
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [viewingDocument, currentDocUrl]);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [currentDocUrl, setCurrentDocUrl] = useState<string | null>(null);
 
   if (!entries || entries.length === 0) {
     return (
@@ -88,7 +30,7 @@ export const PlanTimeline = ({ entries }: PlanTimelineProps) => {
 
   const handleViewDocument = (comprovanteUrl: string) => {
     setCurrentDocUrl(comprovanteUrl);
-    setViewingDocument(true);
+    setViewerOpen(true);
   };
 
   const formatCurrency = (value: number | null) => {
@@ -176,43 +118,7 @@ export const PlanTimeline = ({ entries }: PlanTimelineProps) => {
         );
       })}
 
-      {/* Dialog de visualização do comprovante */}
-      <Dialog open={viewingDocument} onOpenChange={setViewingDocument}>
-        <DialogContent className="sm:max-w-3xl" aria-describedby="dialog-description">
-          <DialogHeader>
-            <DialogTitle>Visualizar Comprovante</DialogTitle>
-            <DialogDescription>
-              Visualização do documento anexado
-            </DialogDescription>
-          </DialogHeader>
-          <div id="dialog-description" className="w-full max-h-[600px] overflow-auto bg-muted rounded-lg p-4">
-            {currentDocUrl && isPdf(currentDocUrl) ? (
-              <div className="p-4 flex flex-col items-center gap-4">
-                <p className="text-sm text-muted-foreground">Arquivo PDF</p>
-                <Button asChild>
-                  <a href={signedUrl || currentDocUrl} target="_blank" rel="noopener noreferrer">
-                    Abrir PDF em nova guia
-                  </a>
-                </Button>
-              </div>
-            ) : currentDocUrl ? (
-              // Só renderiza a imagem quando tivermos uma URL absoluta (signed) ou quando já for absoluta
-              isAbsoluteUrl(currentDocUrl) || signedUrl ? (
-                <img
-                  src={isAbsoluteUrl(currentDocUrl) ? currentDocUrl : signedUrl}
-                  alt="Comprovante"
-                  className="w-full h-auto object-contain"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="w-full h-48 flex items-center justify-center text-sm text-muted-foreground bg-muted rounded-md">
-                  Carregando anexo...
-                </div>
-              )
-            ) : null}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <DocumentViewer open={viewerOpen} onOpenChange={setViewerOpen} url={currentDocUrl} />
     </div>
   );
 };
