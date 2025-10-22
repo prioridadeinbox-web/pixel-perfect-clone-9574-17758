@@ -62,10 +62,15 @@ DROP TRIGGER IF EXISTS update_planos_adquiridos_updated_at ON public.planos_adqu
 DROP TRIGGER IF EXISTS update_solicitacoes_updated_at ON public.solicitacoes;
 DROP TRIGGER IF EXISTS update_user_documents_updated_at ON public.user_documents;
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP TRIGGER IF EXISTS sync_platform_status_on_payment_change ON public.profiles;
 DROP TRIGGER IF EXISTS sync_platform_status_trigger ON public.profiles;
+DROP TRIGGER IF EXISTS on_solicitacao_created ON public.solicitacoes;
 DROP TRIGGER IF EXISTS create_timeline_on_request ON public.solicitacoes;
+DROP TRIGGER IF EXISTS on_solicitacao_updated ON public.solicitacoes;
 DROP TRIGGER IF EXISTS update_timeline_on_request ON public.solicitacoes;
+DROP TRIGGER IF EXISTS audit_profile_changes ON public.profiles;
 DROP TRIGGER IF EXISTS audit_profile_updates ON public.profiles;
+DROP TRIGGER IF EXISTS audit_role_changes ON public.user_roles;
 DROP TRIGGER IF EXISTS log_role_changes_trigger ON public.user_roles;
 
 -- REMOVER TODAS AS FUNÇÕES
@@ -156,7 +161,7 @@ CREATE TABLE IF NOT EXISTS public.planos (
 
 CREATE TABLE IF NOT EXISTS public.planos_adquiridos (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  cliente_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  cliente_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   plano_id UUID NOT NULL REFERENCES public.planos(id) ON DELETE CASCADE,
   id_carteira TEXT NOT NULL,
   tipo_saque public.withdrawal_type NOT NULL,
@@ -168,13 +173,13 @@ CREATE TABLE IF NOT EXISTS public.planos_adquiridos (
 
 CREATE TABLE IF NOT EXISTS public.solicitacoes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   plano_adquirido_id UUID REFERENCES public.planos_adquiridos(id) ON DELETE SET NULL,
   tipo_solicitacao TEXT NOT NULL,
   descricao TEXT,
   status TEXT NOT NULL DEFAULT 'pendente',
   resposta_admin TEXT,
-  atendida_por UUID REFERENCES auth.users(id),
+  atendida_por UUID REFERENCES public.profiles(id),
   atendida_em TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
@@ -196,7 +201,7 @@ CREATE TABLE IF NOT EXISTS public.historico_observacoes (
 
 CREATE TABLE IF NOT EXISTS public.user_documents (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   tipo_documento TEXT NOT NULL,
   arquivo_url TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'pendente',
