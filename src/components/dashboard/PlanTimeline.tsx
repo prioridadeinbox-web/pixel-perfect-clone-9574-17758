@@ -39,6 +39,7 @@ export const PlanTimeline = ({ entries }: PlanTimelineProps) => {
   };
   
   const isPdf = (value: string) => getPath(value).toLowerCase().endsWith('.pdf');
+  const isAbsoluteUrl = (value: string) => /^https?:\/\//i.test(value);
 
   // Criar signed URL quando o dialog abre
   useEffect(() => {
@@ -193,12 +194,19 @@ export const PlanTimeline = ({ entries }: PlanTimelineProps) => {
                 </Button>
               </div>
             ) : currentDocUrl ? (
-              <img
-                src={signedUrl || currentDocUrl}
-                alt="Comprovante"
-                className="w-full h-auto object-contain"
-                loading="lazy"
-              />
+              // Só renderiza a imagem quando tivermos uma URL absoluta (signed) ou quando já for absoluta
+              isAbsoluteUrl(currentDocUrl) || signedUrl ? (
+                <img
+                  src={isAbsoluteUrl(currentDocUrl) ? currentDocUrl : signedUrl}
+                  alt="Comprovante"
+                  className="w-full h-auto object-contain"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="w-full h-48 flex items-center justify-center text-sm text-muted-foreground bg-muted rounded-md">
+                  Carregando anexo...
+                </div>
+              )
             ) : null}
           </div>
         </DialogContent>
