@@ -19,41 +19,79 @@ DROP POLICY IF EXISTS "Users can upload their own profile photo" ON storage.obje
 DROP POLICY IF EXISTS "Users can update their own profile photo" ON storage.objects;
 DROP POLICY IF EXISTS "Users can delete their own profile photo" ON storage.objects;
 
--- REMOVER TODAS AS POLICIES DAS TABELAS
-DROP POLICY IF EXISTS "profiles_select_policy" ON public.profiles;
-DROP POLICY IF EXISTS "profiles_insert_policy" ON public.profiles;
-DROP POLICY IF EXISTS "profiles_update_policy" ON public.profiles;
-DROP POLICY IF EXISTS "profiles_delete_policy" ON public.profiles;
-DROP POLICY IF EXISTS "Users can view their own roles" ON public.user_roles;
-DROP POLICY IF EXISTS "Admins can view all roles" ON public.user_roles;
-DROP POLICY IF EXISTS "Only admins can insert roles" ON public.user_roles;
-DROP POLICY IF EXISTS "Only admins can update OTHER users roles" ON public.user_roles;
-DROP POLICY IF EXISTS "Only admins can delete roles" ON public.user_roles;
-DROP POLICY IF EXISTS "Authenticated users can view planos" ON public.planos;
-DROP POLICY IF EXISTS "Admins can manage planos" ON public.planos;
-DROP POLICY IF EXISTS "Users can view their own planos" ON public.planos_adquiridos;
-DROP POLICY IF EXISTS "Admins can view all planos_adquiridos" ON public.planos_adquiridos;
-DROP POLICY IF EXISTS "Admins can insert planos_adquiridos" ON public.planos_adquiridos;
-DROP POLICY IF EXISTS "Admins can update planos_adquiridos" ON public.planos_adquiridos;
-DROP POLICY IF EXISTS "Admins can delete planos_adquiridos" ON public.planos_adquiridos;
-DROP POLICY IF EXISTS "Users can view their own requests" ON public.solicitacoes;
-DROP POLICY IF EXISTS "Users can create their own requests" ON public.solicitacoes;
-DROP POLICY IF EXISTS "Admins can view all requests" ON public.solicitacoes;
-DROP POLICY IF EXISTS "Admins can update all requests" ON public.solicitacoes;
-DROP POLICY IF EXISTS "Users can view their plan history" ON public.historico_observacoes;
-DROP POLICY IF EXISTS "Users can create history for their plans" ON public.historico_observacoes;
-DROP POLICY IF EXISTS "Admins can view all history" ON public.historico_observacoes;
-DROP POLICY IF EXISTS "Admins can manage all history" ON public.historico_observacoes;
-DROP POLICY IF EXISTS "Users can view their own documents" ON public.user_documents;
-DROP POLICY IF EXISTS "Users can upload their own documents" ON public.user_documents;
-DROP POLICY IF EXISTS "Users can update their own documents" ON public.user_documents;
-DROP POLICY IF EXISTS "Users can delete their own documents" ON public.user_documents;
-DROP POLICY IF EXISTS "Admins can view all documents" ON public.user_documents;
-DROP POLICY IF EXISTS "Admins can update all documents" ON public.user_documents;
-DROP POLICY IF EXISTS "Admins can view all logs" ON public.system_logs;
-DROP POLICY IF EXISTS "Admins can view platform_config" ON public.platform_config;
-DROP POLICY IF EXISTS "Admins can manage platform_config" ON public.platform_config;
-DROP POLICY IF EXISTS "Users can view platform_config" ON public.platform_config;
+-- REMOVER TODAS AS POLICIES DAS TABELAS (seguro mesmo se a tabela não existir)
+DO $$
+BEGIN
+  -- profiles
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname='profiles') THEN
+    EXECUTE 'DROP POLICY IF EXISTS "profiles_select_policy" ON public.profiles';
+    EXECUTE 'DROP POLICY IF EXISTS "profiles_insert_policy" ON public.profiles';
+    EXECUTE 'DROP POLICY IF EXISTS "profiles_update_policy" ON public.profiles';
+    EXECUTE 'DROP POLICY IF EXISTS "profiles_delete_policy" ON public.profiles';
+  END IF;
+
+  -- user_roles
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname='user_roles') THEN
+    EXECUTE 'DROP POLICY IF EXISTS "Users can view their own roles" ON public.user_roles';
+    EXECUTE 'DROP POLICY IF EXISTS "Admins can view all roles" ON public.user_roles';
+    EXECUTE 'DROP POLICY IF EXISTS "Only admins can insert roles" ON public.user_roles';
+    EXECUTE 'DROP POLICY IF EXISTS "Only admins can update OTHER users roles" ON public.user_roles';
+    EXECUTE 'DROP POLICY IF EXISTS "Only admins can delete roles" ON public.user_roles';
+  END IF;
+
+  -- planos
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname='planos') THEN
+    EXECUTE 'DROP POLICY IF EXISTS "Authenticated users can view planos" ON public.planos';
+    EXECUTE 'DROP POLICY IF EXISTS "Admins can manage planos" ON public.planos';
+  END IF;
+
+  -- planos_adquiridos
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname='planos_adquiridos') THEN
+    EXECUTE 'DROP POLICY IF EXISTS "Users can view their own planos" ON public.planos_adquiridos';
+    EXECUTE 'DROP POLICY IF EXISTS "Admins can view all planos_adquiridos" ON public.planos_adquiridos';
+    EXECUTE 'DROP POLICY IF EXISTS "Admins can insert planos_adquiridos" ON public.planos_adquiridos';
+    EXECUTE 'DROP POLICY IF EXISTS "Admins can update planos_adquiridos" ON public.planos_adquiridos';
+    EXECUTE 'DROP POLICY IF EXISTS "Admins can delete planos_adquiridos" ON public.planos_adquiridos';
+  END IF;
+
+  -- solicitacoes
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname='solicitacoes') THEN
+    EXECUTE 'DROP POLICY IF EXISTS "Users can view their own requests" ON public.solicitacoes';
+    EXECUTE 'DROP POLICY IF EXISTS "Users can create their own requests" ON public.solicitacoes';
+    EXECUTE 'DROP POLICY IF EXISTS "Admins can view all requests" ON public.solicitacoes';
+    EXECUTE 'DROP POLICY IF EXISTS "Admins can update all requests" ON public.solicitacoes';
+  END IF;
+
+  -- historico_observacoes
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname='historico_observacoes') THEN
+    EXECUTE 'DROP POLICY IF EXISTS "Users can view their plan history" ON public.historico_observacoes';
+    EXECUTE 'DROP POLICY IF EXISTS "Users can create history for their plans" ON public.historico_observacoes';
+    EXECUTE 'DROP POLICY IF EXISTS "Admins can view all history" ON public.historico_observacoes';
+    EXECUTE 'DROP POLICY IF EXISTS "Admins can manage all history" ON public.historico_observacoes';
+  END IF;
+
+  -- user_documents
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname='user_documents') THEN
+    EXECUTE 'DROP POLICY IF EXISTS "Users can view their own documents" ON public.user_documents';
+    EXECUTE 'DROP POLICY IF EXISTS "Users can upload their own documents" ON public.user_documents';
+    EXECUTE 'DROP POLICY IF EXISTS "Users can update their own documents" ON public.user_documents';
+    EXECUTE 'DROP POLICY IF EXISTS "Users can delete their own documents" ON public.user_documents';
+    EXECUTE 'DROP POLICY IF EXISTS "Admins can view all documents" ON public.user_documents';
+    EXECUTE 'DROP POLICY IF EXISTS "Admins can update all documents" ON public.user_documents';
+  END IF;
+
+  -- system_logs
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname='system_logs') THEN
+    EXECUTE 'DROP POLICY IF EXISTS "Admins can view all logs" ON public.system_logs';
+  END IF;
+
+  -- platform_config
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname='platform_config') THEN
+    EXECUTE 'DROP POLICY IF EXISTS "Admins can view platform_config" ON public.platform_config';
+    EXECUTE 'DROP POLICY IF EXISTS "Admins can manage platform_config" ON public.platform_config';
+    EXECUTE 'DROP POLICY IF EXISTS "Users can view platform_config" ON public.platform_config';
+  END IF;
+END $$;
 
 -- REMOVER TODOS OS TRIGGERS (seguro mesmo se a tabela não existir)
 DO $$
