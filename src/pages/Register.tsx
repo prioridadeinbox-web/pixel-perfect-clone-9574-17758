@@ -116,7 +116,7 @@ const Register = () => {
       toast.success("Cadastro realizado! Você já pode fazer login.");
       navigate("/");
     } catch (error: any) {
-      toast.error(error.message || "Erro ao criar conta");
+      toast.error("Erro ao criar conta");
     } finally {
       setLoading(false);
     }
@@ -214,7 +214,7 @@ const Register = () => {
                   </Label>
                   <Input
                     id="email"
-                    type="email"
+                    type="text"
                     required
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}

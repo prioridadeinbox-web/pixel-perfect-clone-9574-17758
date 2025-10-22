@@ -65,7 +65,7 @@ const Index = () => {
         await checkUserRole(data.user.id);
       }
     } catch (error: any) {
-      toast.error(error.message || "Erro ao fazer login");
+      toast.error("Erro ao fazer login");
     } finally {
       setLoading(false);
     }
@@ -130,7 +130,7 @@ const Index = () => {
                   </Label>
                   <Input
                     id="email"
-                    type="email"
+                    type="text"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="h-14 text-base border-input bg-background"

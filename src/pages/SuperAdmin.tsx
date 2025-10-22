@@ -235,7 +235,7 @@ const SuperAdmin = () => {
                     <Label htmlFor="email">Email do Administrador</Label>
                     <Input
                       id="email"
-                      type="email"
+                      type="text"
                       value={newAdminEmail}
                       onChange={(e) => setNewAdminEmail(e.target.value)}
                       placeholder="admin@exemplo.com"
