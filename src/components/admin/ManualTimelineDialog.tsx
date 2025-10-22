@@ -22,8 +22,6 @@ export const ManualTimelineDialog = ({
   onSuccess 
 }: ManualTimelineDialogProps) => {
   const [observacao, setObservacao] = useState('');
-  const [valorSolicitado, setValorSolicitado] = useState('');
-  const [valorFinal, setValorFinal] = useState('');
   const [status, setStatus] = useState('pendente');
   const [uploading, setUploading] = useState(false);
   const [comprovanteUrl, setComprovanteUrl] = useState('');
@@ -73,8 +71,6 @@ export const ManualTimelineDialog = ({
         .insert({
           plano_adquirido_id: planoAdquiridoId,
           observacao: observacao,
-          valor_solicitado: valorSolicitado ? parseFloat(valorSolicitado) : null,
-          valor_final: valorFinal ? parseFloat(valorFinal) : null,
           status_evento: status,
           comprovante_url: comprovanteUrl || null,
           tipo_evento: 'manual_admin',
@@ -87,8 +83,6 @@ export const ManualTimelineDialog = ({
       
       // Reset form
       setObservacao('');
-      setValorSolicitado('');
-      setValorFinal('');
       setStatus('pendente');
       setComprovanteUrl('');
       
@@ -114,32 +108,8 @@ export const ManualTimelineDialog = ({
               value={observacao}
               onChange={(e) => setObservacao(e.target.value)}
               placeholder="Descreva a observação..."
-              rows={3}
+              rows={4}
             />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Valor Solicitado</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={valorSolicitado}
-                onChange={(e) => setValorSolicitado(e.target.value)}
-                placeholder="0.00"
-              />
-            </div>
-
-            <div>
-              <Label>Valor Final</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={valorFinal}
-                onChange={(e) => setValorFinal(e.target.value)}
-                placeholder="0.00"
-              />
-            </div>
           </div>
 
           <div>
