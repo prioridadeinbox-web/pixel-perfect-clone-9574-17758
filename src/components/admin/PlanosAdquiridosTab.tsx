@@ -346,7 +346,6 @@ const PlanosAdquiridosTab = () => {
                     <SelectItem value="teste_1_sc">Teste 1 (SC)</SelectItem>
                     <SelectItem value="teste_2_sc">Teste 2 (SC)</SelectItem>
                     <SelectItem value="sim_rem">Sim. Rem.</SelectItem>
-                    <SelectItem value="pausado">Pausado</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
