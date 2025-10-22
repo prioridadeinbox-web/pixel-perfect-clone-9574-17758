@@ -230,9 +230,18 @@ CREATE INDEX IF NOT EXISTS idx_user_roles_role ON public.user_roles(role);
 CREATE INDEX IF NOT EXISTS idx_planos_adquiridos_cliente_id ON public.planos_adquiridos(cliente_id);
 CREATE INDEX IF NOT EXISTS idx_solicitacoes_user_id ON public.solicitacoes(user_id);
 CREATE INDEX IF NOT EXISTS idx_solicitacoes_status ON public.solicitacoes(status);
-CREATE INDEX IF NOT EXISTS idx_historico_plano_adquirido_id ON public.historico_observacoes(plano_adquirido_id);
+CREATE INDEX IF NOT EXISTS idx_solicitacoes_tipo ON public.solicitacoes(tipo_solicitacao);
+CREATE INDEX IF NOT EXISTS idx_solicitacoes_created_at ON public.solicitacoes(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_historico_plano_adquirido ON public.historico_observacoes(plano_adquirido_id);
+CREATE INDEX IF NOT EXISTS idx_historico_solicitacao ON public.historico_observacoes(solicitacao_id);
 CREATE INDEX IF NOT EXISTS idx_user_documents_user_id ON public.user_documents(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_documents_status ON public.user_documents(status);
 CREATE INDEX IF NOT EXISTS idx_system_logs_expires_at ON public.system_logs(expires_at);
+CREATE INDEX IF NOT EXISTS idx_system_logs_created_at ON public.system_logs(created_at DESC);
+
+-- UNIQUE CONSTRAINTS adicionais
+CREATE UNIQUE INDEX IF NOT EXISTS user_documents_user_id_tipo_documento_key 
+  ON public.user_documents(user_id, tipo_documento);
 
 -- FUNÇÕES
 CREATE OR REPLACE FUNCTION public.has_role(_user_id UUID, _role public.app_role)
@@ -700,6 +709,7 @@ ON CONFLICT (id) DO UPDATE SET
   public = EXCLUDED.public;
 
 -- STORAGE POLICIES - DOCUMENTOS
+DROP POLICY IF EXISTS "Users can upload their own documents" ON storage.objects;
 CREATE POLICY "Users can upload their own documents" ON storage.objects
   FOR INSERT
   WITH CHECK (
@@ -707,27 +717,32 @@ CREATE POLICY "Users can upload their own documents" ON storage.objects
     AND auth.uid()::text = (storage.foldername(name))[1]
   );
 
-CREATE POLICY "Users can view their own documents" ON storage.objects
+DROP POLICY IF EXISTS "Users can upload to documentos folder" ON storage.objects;
+CREATE POLICY "Users can upload to documentos folder" ON storage.objects
+  FOR INSERT
+  WITH CHECK (
+    bucket_id = 'documentos'
+    AND auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+DROP POLICY IF EXISTS "Users can view their own documents" ON storage.objects;
+DROP POLICY IF EXISTS "Users can read own documentos files" ON storage.objects;
+CREATE POLICY "Users can read own documentos files" ON storage.objects
   FOR SELECT
   USING (
     bucket_id = 'documentos'
     AND auth.uid()::text = (storage.foldername(name))[1]
   );
 
-CREATE POLICY "Users can update their own documents" ON storage.objects
-  FOR UPDATE
-  USING (
-    bucket_id = 'documentos'
-    AND auth.uid()::text = (storage.foldername(name))[1]
-  );
-
-CREATE POLICY "Users can delete their own documents" ON storage.objects
+DROP POLICY IF EXISTS "Users can delete own documentos files" ON storage.objects;
+CREATE POLICY "Users can delete own documentos files" ON storage.objects
   FOR DELETE
   USING (
     bucket_id = 'documentos'
     AND auth.uid()::text = (storage.foldername(name))[1]
   );
 
+DROP POLICY IF EXISTS "Admins can view all documents" ON storage.objects;
 CREATE POLICY "Admins can view all documents" ON storage.objects
   FOR SELECT
   USING (
@@ -735,27 +750,52 @@ CREATE POLICY "Admins can view all documents" ON storage.objects
     AND public.has_role(auth.uid(), 'admin')
   );
 
+DROP POLICY IF EXISTS "Admins can view payment receipts" ON storage.objects;
+CREATE POLICY "Admins can view payment receipts" ON storage.objects
+  FOR SELECT
+  USING (
+    bucket_id = 'documentos'
+    AND (storage.foldername(name))[1] = 'comprovantes'
+    AND public.has_role(auth.uid(), 'admin')
+  );
+
+DROP POLICY IF EXISTS "Admins can upload payment receipts" ON storage.objects;
+CREATE POLICY "Admins can upload payment receipts" ON storage.objects
+  FOR INSERT
+  WITH CHECK (
+    bucket_id = 'documentos'
+    AND (storage.foldername(name))[1] = 'comprovantes'
+    AND public.has_role(auth.uid(), 'admin')
+  );
+
+DROP POLICY IF EXISTS "Admins can update payment receipts" ON storage.objects;
+CREATE POLICY "Admins can update payment receipts" ON storage.objects
+  FOR UPDATE
+  USING (
+    bucket_id = 'documentos'
+    AND (storage.foldername(name))[1] = 'comprovantes'
+    AND public.has_role(auth.uid(), 'admin')
+  );
+
 -- STORAGE POLICIES - FOTOS-PERFIL
+DROP POLICY IF EXISTS "Anyone can view profile photos" ON storage.objects;
 CREATE POLICY "Anyone can view profile photos" ON storage.objects
   FOR SELECT
   USING (bucket_id = 'fotos-perfil');
 
-CREATE POLICY "Users can upload their own profile photo" ON storage.objects
+DROP POLICY IF EXISTS "Users can upload their own profile photo" ON storage.objects;
+DROP POLICY IF EXISTS "Users can upload their own profile photos" ON storage.objects;
+CREATE POLICY "Users can upload their own profile photos" ON storage.objects
   FOR INSERT
   WITH CHECK (
     bucket_id = 'fotos-perfil'
     AND auth.uid()::text = (storage.foldername(name))[1]
   );
 
-CREATE POLICY "Users can update their own profile photo" ON storage.objects
+DROP POLICY IF EXISTS "Users can update their own profile photo" ON storage.objects;
+DROP POLICY IF EXISTS "Users can update their own profile photos" ON storage.objects;
+CREATE POLICY "Users can update their own profile photos" ON storage.objects
   FOR UPDATE
-  USING (
-    bucket_id = 'fotos-perfil'
-    AND auth.uid()::text = (storage.foldername(name))[1]
-  );
-
-CREATE POLICY "Users can delete their own profile photo" ON storage.objects
-  FOR DELETE
   USING (
     bucket_id = 'fotos-perfil'
     AND auth.uid()::text = (storage.foldername(name))[1]
