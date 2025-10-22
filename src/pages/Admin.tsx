@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LogOut, Package, ShoppingCart, FileText, UserCog, Settings } from "lucide-react";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 import PlanosTab from "@/components/admin/PlanosTab";
 import PlanosAdquiridosTab from "@/components/admin/PlanosAdquiridosTab";
 import { SolicitacoesTab } from "@/components/admin/SolicitacoesTab";
@@ -13,6 +14,7 @@ import { PlatformLinksConfig } from "@/components/admin/PlatformLinksConfig";
 
 const Admin = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -49,6 +51,20 @@ const Admin = () => {
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
+  }
+
+  // Bloquear acesso mobile
+  if (isMobile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="text-center space-y-4">
+          <h1 className="text-2xl font-bold text-foreground">Dispositivo não suportado</h1>
+          <p className="text-foreground/70 max-w-md">
+            O painel administrativo não está disponível em dispositivos móveis. Por favor, acesse pelo computador.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
