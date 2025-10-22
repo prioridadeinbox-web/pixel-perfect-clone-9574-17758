@@ -1,4 +1,8 @@
-import { FileDown, Paperclip } from "lucide-react";
+import { useState } from "react";
+import { Paperclip, Eye } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface TimelineEntry {
   id: string;
@@ -17,11 +21,40 @@ interface PlanTimelineProps {
 }
 
 export const PlanTimeline = ({ entries }: PlanTimelineProps) => {
+  const [viewingDocument, setViewingDocument] = useState(false);
+  const [signedUrl, setSignedUrl] = useState('');
+  const [currentDocUrl, setCurrentDocUrl] = useState('');
+
   if (!entries || entries.length === 0) {
     return (
       <div className="text-sm text-foreground/70">Nenhuma solicitação.</div>
     );
   }
+
+  const handleViewDocument = async (comprovanteUrl: string) => {
+    setCurrentDocUrl(comprovanteUrl);
+    
+    try {
+      const path = comprovanteUrl.includes('/documentos/')
+        ? comprovanteUrl.split('/documentos/')[1]
+        : comprovanteUrl;
+
+      const { data } = await supabase.storage
+        .from('documentos')
+        .createSignedUrl(path, 60 * 30); // 30 minutos
+
+      setSignedUrl(data?.signedUrl || comprovanteUrl);
+      setViewingDocument(true);
+    } catch (error) {
+      setSignedUrl(comprovanteUrl);
+      setViewingDocument(true);
+    }
+  };
+
+  const getPath = (url: string) =>
+    url.includes('/documentos/') ? url.split('/documentos/')[1] : url;
+
+  const isPdf = (url: string) => getPath(url).toLowerCase().endsWith('.pdf');
 
   const formatCurrency = (value: number | null) => {
     if (!value) return '-';
@@ -93,22 +126,47 @@ export const PlanTimeline = ({ entries }: PlanTimelineProps) => {
               {entry.comprovante_url && (
                 <>
                   <span>|</span>
-                  <a 
-                    href={entry.comprovante_url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 hover:opacity-70 text-primary"
+                  <button
+                    onClick={() => handleViewDocument(entry.comprovante_url!)}
+                    className="inline-flex items-center gap-1 hover:opacity-70 text-primary cursor-pointer"
                     title="Ver comprovante"
                   >
-                    <Paperclip className="w-4 h-4" />
-                    <span className="text-sm">Anexo</span>
-                  </a>
+                    <Eye className="w-4 h-4" />
+                    <span className="text-sm">Ver Anexo</span>
+                  </button>
                 </>
               )}
             </div>
           </div>
         );
       })}
+
+      {/* Dialog de visualização do comprovante */}
+      <Dialog open={viewingDocument} onOpenChange={setViewingDocument}>
+        <DialogContent className="sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Visualizar Comprovante</DialogTitle>
+          </DialogHeader>
+          <div className="w-full max-h-[600px] overflow-auto bg-muted rounded-lg p-4">
+            {currentDocUrl && isPdf(currentDocUrl) ? (
+              <div className="p-4 flex flex-col items-center gap-4">
+                <p className="text-sm text-muted-foreground">Arquivo PDF</p>
+                <Button asChild>
+                  <a href={signedUrl || currentDocUrl} target="_blank" rel="noopener noreferrer">
+                    Abrir PDF em nova guia
+                  </a>
+                </Button>
+              </div>
+            ) : currentDocUrl ? (
+              <img
+                src={signedUrl || currentDocUrl}
+                alt="Comprovante"
+                className="w-full h-auto object-contain"
+              />
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
