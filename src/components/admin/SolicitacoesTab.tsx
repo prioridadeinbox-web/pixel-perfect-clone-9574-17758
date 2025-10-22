@@ -207,11 +207,8 @@ export const SolicitacoesTab = () => {
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('documentos')
-        .getPublicUrl(filePath);
-
-      setComprovanteUrl(publicUrl);
+      // Salvar apenas o caminho do storage (bucket privado)
+      setComprovanteUrl(filePath);
       toast.success("Comprovante enviado com sucesso!");
     } catch (error: any) {
       toast.error("Erro ao enviar comprovante: " + error.message);
