@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { ActivityLogger } from "@/lib/activityLogger";
 
 interface SignedImageProps {
   pathOrUrl: string;
@@ -21,14 +22,40 @@ export const SignedImage = ({ pathOrUrl }: SignedImageProps) => {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      const started = performance.now?.() || Date.now();
       try {
         const path = getPath(pathOrUrl);
-        if (!path) return;
+        const pdf = isPdf(pathOrUrl);
+        console.debug("[SignedImage] start", { pathOrUrl, path, pdf });
+        if (!path) { 
+          console.warn("[SignedImage] empty path", { pathOrUrl });
+          return; 
+        }
+        await ActivityLogger.log("document.signed_url.requested", "documentos", { path, pdf, source: "SignedImage" });
+
         const { data, error } = await supabase.storage
           .from("documentos")
           .createSignedUrl(path, 60 * 30);
-        if (!cancelled) setSignedUrl(error ? "" : (data?.signedUrl || ""));
-      } catch {
+
+        if (error || !data?.signedUrl) {
+          console.warn("[SignedImage] signed URL error", { path, error });
+          await ActivityLogger.log("document.signed_url.error", "documentos", { path, pdf, error: String(error) });
+          const isAbs = /^https?:\/\//i.test(pathOrUrl);
+          if (!cancelled) {
+            if (isAbs) {
+              setSignedUrl(pathOrUrl);
+            } else {
+              const { data: pub } = supabase.storage.from("documentos").getPublicUrl(path);
+              setSignedUrl(pub.publicUrl || "");
+            }
+          }
+        } else {
+          if (!cancelled) setSignedUrl(data.signedUrl);
+          await ActivityLogger.log("document.signed_url.success", "documentos", { path, pdf, duration_ms: Math.round((performance.now?.() || Date.now()) - started) });
+        }
+      } catch (e) {
+        console.error("[SignedImage] unexpected error", e);
+        await ActivityLogger.log("document.signed_url.exception", "documentos", { error: String(e), source: "SignedImage" });
         if (!cancelled) setSignedUrl("");
       }
     })();
@@ -39,9 +66,9 @@ export const SignedImage = ({ pathOrUrl }: SignedImageProps) => {
     return (
       <div className="p-4 flex flex-col items-center gap-4">
         <p className="text-sm text-muted-foreground">Arquivo PDF</p>
-        <Button asChild>
+        <Button asChild disabled={!signedUrl}>
           <a href={signedUrl || undefined} target="_blank" rel="noopener noreferrer">
-            Abrir PDF em nova guia
+            {signedUrl ? "Abrir PDF em nova guia" : "Gerando link seguro..."}
           </a>
         </Button>
       </div>

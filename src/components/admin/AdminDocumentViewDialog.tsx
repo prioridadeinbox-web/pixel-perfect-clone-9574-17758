@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { ActivityLogger } from "@/lib/activityLogger";
 
 interface AdminDocumentViewDialogProps {
   open: boolean;
@@ -27,14 +28,25 @@ export const AdminDocumentViewDialog = ({
     }
 
     const loadSignedUrl = async () => {
+      const started = performance.now?.() || Date.now();
       try {
         const path = getPath(documentUrl);
-        const { data } = await supabase.storage
+        console.debug("[AdminDocumentViewDialog] request", { documentUrl, path });
+        await ActivityLogger.log("document.signed_url.requested", "documentos", { path, source: "AdminDocumentViewDialog" });
+        const { data, error } = await supabase.storage
           .from('documentos')
           .createSignedUrl(path, 60 * 30); // 30 minutos
-        
-        setSignedUrl(data?.signedUrl || documentUrl);
-      } catch {
+        if (error || !data?.signedUrl) {
+          console.warn("[AdminDocumentViewDialog] signed URL error", { path, error });
+          await ActivityLogger.log("document.signed_url.error", "documentos", { path, error: String(error), source: "AdminDocumentViewDialog" });
+          setSignedUrl(documentUrl);
+        } else {
+          setSignedUrl(data.signedUrl);
+          await ActivityLogger.log("document.signed_url.success", "documentos", { path, duration_ms: Math.round((performance.now?.() || Date.now()) - started), source: "AdminDocumentViewDialog" });
+        }
+      } catch (e) {
+        console.error("[AdminDocumentViewDialog] unexpected error", e);
+        await ActivityLogger.log("document.signed_url.exception", "documentos", { error: String(e), source: "AdminDocumentViewDialog" });
         setSignedUrl(documentUrl);
       }
     };

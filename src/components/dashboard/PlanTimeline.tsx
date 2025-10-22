@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { SignedImage } from "@/components/dashboard/SignedImage";
+import { ActivityLogger } from "@/lib/activityLogger";
 
 interface TimelineEntry {
   id: string;
@@ -31,7 +32,9 @@ export const PlanTimeline = ({ entries }: PlanTimelineProps) => {
     );
   }
 
-  const handleViewDocument = (comprovanteUrl: string) => {
+  const handleViewDocument = async (comprovanteUrl: string) => {
+    console.debug("[PlanTimeline] open viewer", { comprovanteUrl });
+    await ActivityLogger.log("timeline.view_attachment", "documentos", { comprovanteUrl });
     setCurrentDocUrl(comprovanteUrl);
     setViewerOpen(true);
   };

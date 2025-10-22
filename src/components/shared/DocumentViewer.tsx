@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { ActivityLogger } from "@/lib/activityLogger";
 
 interface DocumentViewerProps {
   open: boolean;
@@ -30,9 +31,15 @@ export const DocumentViewer = ({ open, onOpenChange, url, title = "Visualizar Co
 
     let cancelled = false;
     (async () => {
+      const started = performance.now?.() || Date.now();
       try {
         const path = getPath(url);
-        if (!path) { setFinalUrl(isAbsoluteUrl(url) ? url : ""); return; }
+        const pdf = isPdf(url);
+        const isAbs = isAbsoluteUrl(url);
+        console.debug("[DocumentViewer] open", { url, path, pdf, isAbs });
+        await ActivityLogger.log("document.viewer.open", "documentos", { url, path, pdf, isAbs, source: "DocumentViewer" });
+
+        if (!path) { setFinalUrl(isAbs ? url : ""); return; }
 
         const { data, error } = await supabase.storage
           .from("documentos")
@@ -40,20 +47,23 @@ export const DocumentViewer = ({ open, onOpenChange, url, title = "Visualizar Co
 
         if (!cancelled) {
           if (error || !data?.signedUrl) {
-            // Fallback idêntico ao admin: usa a própria URL original
-            if (isAbsoluteUrl(url)) {
+            console.warn("[DocumentViewer] signed URL error", { path, error });
+            await ActivityLogger.log("document.signed_url.error", "documentos", { path, pdf, error: String(error), source: "DocumentViewer" });
+            if (isAbs) {
               setFinalUrl(url);
             } else {
-              // última tentativa: construir URL pública (funciona se bucket estiver público)
               const { data: pub } = supabase.storage.from("documentos").getPublicUrl(path);
               setFinalUrl(pub.publicUrl || "");
             }
           } else {
             setFinalUrl(data.signedUrl);
+            await ActivityLogger.log("document.signed_url.success", "documentos", { path, pdf, duration_ms: Math.round((performance.now?.() || Date.now()) - started), source: "DocumentViewer" });
           }
         }
-      } catch {
+      } catch (e) {
+        console.error("[DocumentViewer] unexpected error", e);
         if (!cancelled) setFinalUrl(isAbsoluteUrl(url) ? url : "");
+        await ActivityLogger.log("document.signed_url.exception", "documentos", { error: String(e), source: "DocumentViewer" });
       }
     })();
 

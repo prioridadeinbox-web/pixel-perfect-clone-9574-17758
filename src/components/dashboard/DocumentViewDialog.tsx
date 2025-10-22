@@ -3,6 +3,7 @@ import { FileText, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { ActivityLogger } from "@/lib/activityLogger";
 interface DocumentViewDialogProps {
   tipo: 'cnh' | 'selfie_rg';
   label: string;
@@ -34,15 +35,26 @@ export const DocumentViewDialog = ({
     if (!open || !(documents?.length)) { setSignedMap({}); return; }
     let cancelled = false;
     (async () => {
+      console.debug("[DocumentViewDialog] mapping docs", { count: documents.length, tipo, label });
+      await ActivityLogger.log("document.viewer.open", "documentos", { tipo, label, count: documents.length, source: "DocumentViewDialog" });
       const entries = await Promise.all(
         documents.map(async (doc) => {
           try {
             const path = getPath(doc.arquivo_url);
-            const { data } = await supabase.storage
+            const pdf = isPdf(doc.arquivo_url);
+            await ActivityLogger.log("document.signed_url.requested", "documentos", { path, pdf, source: "DocumentViewDialog" });
+            const { data, error } = await supabase.storage
               .from('documentos')
               .createSignedUrl(path, 60 * 30); // 30 minutos
-            return [doc.id, data?.signedUrl || doc.arquivo_url] as const;
-          } catch {
+            if (error || !data?.signedUrl) {
+              console.warn("[DocumentViewDialog] signed URL error", { path, error });
+              await ActivityLogger.log("document.signed_url.error", "documentos", { path, pdf, error: String(error), source: "DocumentViewDialog" });
+              return [doc.id, doc.arquivo_url] as const;
+            }
+            return [doc.id, data.signedUrl] as const;
+          } catch (e) {
+            console.error("[DocumentViewDialog] unexpected error", e);
+            await ActivityLogger.log("document.signed_url.exception", "documentos", { error: String(e), source: "DocumentViewDialog" });
             return [doc.id, doc.arquivo_url] as const;
           }
         })
