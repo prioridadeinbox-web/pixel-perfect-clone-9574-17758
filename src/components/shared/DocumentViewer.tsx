@@ -20,29 +20,47 @@ const getPath = (value: string) => {
 };
 
 const isPdf = (value: string) => getPath(value).toLowerCase().endsWith(".pdf");
+const isAbsoluteUrl = (value: string) => /^https?:\/\//i.test(value);
 
 export const DocumentViewer = ({ open, onOpenChange, url, title = "Visualizar Comprovante", description = "Visualização do documento anexado" }: DocumentViewerProps) => {
-  const [signedUrl, setSignedUrl] = useState("");
+  const [finalUrl, setFinalUrl] = useState("");
 
   useEffect(() => {
-    if (!open || !url) { setSignedUrl(""); return; }
+    if (!open || !url) { setFinalUrl(""); return; }
 
     let cancelled = false;
     (async () => {
       try {
         const path = getPath(url);
-        if (!path) { setSignedUrl(""); return; }
+        if (!path) { setFinalUrl(isAbsoluteUrl(url) ? url : ""); return; }
+
         const { data, error } = await supabase.storage
           .from("documentos")
           .createSignedUrl(path, 60 * 30);
-        if (!cancelled) setSignedUrl(error ? "" : (data?.signedUrl || ""));
+
+        if (!cancelled) {
+          if (error || !data?.signedUrl) {
+            // Fallback idêntico ao admin: usa a própria URL original
+            if (isAbsoluteUrl(url)) {
+              setFinalUrl(url);
+            } else {
+              // última tentativa: construir URL pública (funciona se bucket estiver público)
+              const { data: pub } = supabase.storage.from("documentos").getPublicUrl(path);
+              setFinalUrl(pub.publicUrl || "");
+            }
+          } else {
+            setFinalUrl(data.signedUrl);
+          }
+        }
       } catch {
-        if (!cancelled) setSignedUrl("");
+        if (!cancelled) setFinalUrl(isAbsoluteUrl(url) ? url : "");
       }
     })();
 
     return () => { cancelled = true; };
   }, [open, url]);
+
+  const isPdfFile = url ? isPdf(url) : false;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -52,18 +70,18 @@ export const DocumentViewer = ({ open, onOpenChange, url, title = "Visualizar Co
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <div id="doc-viewer-description" className="w-full max-h-[600px] overflow-auto bg-muted rounded-lg p-4">
-          {url && isPdf(url) ? (
+          {url && isPdfFile ? (
             <div className="p-4 flex flex-col items-center gap-4">
               <p className="text-sm text-muted-foreground">Arquivo PDF</p>
               <Button asChild>
-                <a href={signedUrl || undefined} target="_blank" rel="noopener noreferrer">
+                <a href={finalUrl || undefined} target="_blank" rel="noopener noreferrer">
                   Abrir PDF em nova guia
                 </a>
               </Button>
             </div>
           ) : url ? (
-            signedUrl ? (
-              <img src={signedUrl} alt="Comprovante" className="w-full h-auto object-contain" loading="lazy" />
+            finalUrl ? (
+              <img src={finalUrl} alt="Comprovante" className="w-full h-auto object-contain" loading="lazy" />
             ) : (
               <div className="w-full h-48 flex items-center justify-center text-sm text-muted-foreground bg-muted rounded-md">
                 Carregando anexo...
