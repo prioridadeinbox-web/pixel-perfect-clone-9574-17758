@@ -1,43 +1,14 @@
 -- =====================================================
 -- SCRIPT DE TESTE - INSERIR DADOS DE EXEMPLO
--- Execute este SQL após rodar o COMPLETE_DATABASE_SETUP.sql
+-- Execute após rodar o COMPLETE_DATABASE_SETUP.sql
 -- =====================================================
 
--- ⚠️ IMPORTANTE: ANTES DE EXECUTAR ESTE SCRIPT
--- 1. Crie o usuário admin manualmente no Supabase:
---    - Vá em Authentication > Users > Add User
---    - Email: admin@sistema.com
---    - Password: Admin@123456
---    - Email Confirm: YES (marque como confirmado)
---    - Copie o UUID do usuário criado
---    
--- 2. Substitua 'SEU_USER_ID_AQUI' abaixo pelo UUID do admin
-
--- =====================================================
--- CONFIGURAÇÃO DO ADMIN
--- =====================================================
-
--- SUBSTITUA 'SEU_USER_ID_AQUI' pelo UUID do usuário admin@sistema.com
-DO $$
-DECLARE
-  admin_id UUID;
-BEGIN
-  -- Buscar o ID do usuário admin@sistema.com na tabela profiles
-  SELECT id INTO admin_id 
-  FROM profiles 
-  WHERE email = 'admin@sistema.com';
-  
-  IF admin_id IS NULL THEN
-    RAISE EXCEPTION 'Usuário admin@sistema.com não encontrado! Crie o usuário primeiro no Supabase Auth.';
-  END IF;
-  
-  -- Adicionar role de admin
-  INSERT INTO user_roles (user_id, role)
-  VALUES (admin_id, 'admin')
-  ON CONFLICT (user_id, role) DO NOTHING;
-  
-  RAISE NOTICE 'Admin configurado com sucesso! User ID: %', admin_id;
-END $$;
+-- ⚠️ IMPORTANTE: ORDEM DE EXECUÇÃO
+-- 1. Execute o COMPLETE_DATABASE_SETUP.sql primeiro
+-- 2. Crie o admin chamando a Edge Function:
+--    curl -X POST https://acodxjpalsaixkbnvwso.supabase.co/functions/v1/setup-admin
+-- 3. Execute este script (TEST_DATABASE.sql)
+-- 4. Faça login com: admin@sistema.com / Admin@123456
 
 -- =====================================================
 -- DADOS DE TESTE
