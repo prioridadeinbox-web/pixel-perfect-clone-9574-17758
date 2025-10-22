@@ -6,7 +6,7 @@
 -- ⚠️ IMPORTANTE: ORDEM DE EXECUÇÃO
 -- 1. Execute o COMPLETE_DATABASE_SETUP.sql primeiro
 -- 2. Crie o admin chamando a Edge Function:
---    curl -X POST https://acodxjpalsaixkbnvwso.supabase.co/functions/v1/setup-admin
+--    curl -X POST https://zelqxxlqptmapkuaseix.supabase.co/functions/v1/setup-admin
 -- 3. Execute este script (TEST_DATABASE.sql)
 -- 4. Faça login com: admin@sistema.com / Admin@123456
 
