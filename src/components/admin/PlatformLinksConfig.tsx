@@ -13,6 +13,7 @@ export const PlatformLinksConfig = () => {
   const [comprarPlanoLink, setComprarPlanoLink] = useState("");
   const [contatarSuporteLink, setContatarSuporteLink] = useState("");
   const [voltarSiteLink, setVoltarSiteLink] = useState("");
+  const [saqueQuinzenalLink, setSaqueQuinzenalLink] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -30,7 +31,8 @@ export const PlatformLinksConfig = () => {
           "profit_pro_link",
           "comprar_plano_link",
           "contatar_suporte_link",
-          "voltar_site_link"
+          "voltar_site_link",
+          "saque_quinzenal_link"
         ]);
 
       if (error) throw error;
@@ -40,12 +42,14 @@ export const PlatformLinksConfig = () => {
       const comprarLink = data?.find(c => c.config_key === "comprar_plano_link");
       const suporteLink = data?.find(c => c.config_key === "contatar_suporte_link");
       const voltarLink = data?.find(c => c.config_key === "voltar_site_link");
+      const saqueLink = data?.find(c => c.config_key === "saque_quinzenal_link");
 
       setProfitOneLink(oneLink?.config_value || "");
       setProfitProLink(proLink?.config_value || "");
       setComprarPlanoLink(comprarLink?.config_value || "");
       setContatarSuporteLink(suporteLink?.config_value || "");
       setVoltarSiteLink(voltarLink?.config_value || "");
+      setSaqueQuinzenalLink(saqueLink?.config_value || "");
     } catch (error: any) {
       toast.error("Erro ao carregar links: " + error.message);
     } finally {
@@ -77,6 +81,7 @@ export const PlatformLinksConfig = () => {
       const normalizedComprarPlano = normalizeUrl(comprarPlanoLink);
       const normalizedContatarSuporte = normalizeUrl(contatarSuporteLink);
       const normalizedVoltarSite = normalizeUrl(voltarSiteLink);
+      const normalizedSaqueQuinzenal = normalizeUrl(saqueQuinzenalLink);
 
       const updates = [
         {
@@ -99,6 +104,10 @@ export const PlatformLinksConfig = () => {
           config_key: "voltar_site_link",
           config_value: normalizedVoltarSite,
         },
+        {
+          config_key: "saque_quinzenal_link",
+          config_value: normalizedSaqueQuinzenal,
+        },
       ];
 
       for (const update of updates) {
@@ -115,6 +124,7 @@ export const PlatformLinksConfig = () => {
       setComprarPlanoLink(normalizedComprarPlano);
       setContatarSuporteLink(normalizedContatarSuporte);
       setVoltarSiteLink(normalizedVoltarSite);
+      setSaqueQuinzenalLink(normalizedSaqueQuinzenal);
 
       toast.success("Links atualizados com sucesso!");
     } catch (error: any) {
@@ -200,6 +210,20 @@ export const PlatformLinksConfig = () => {
             placeholder="exemplo.com ou https://exemplo.com"
             value={voltarSiteLink}
             onChange={(e) => setVoltarSiteLink(e.target.value)}
+          />
+          <p className="text-xs text-muted-foreground">
+            Pode digitar com ou sem https:// (será adicionado automaticamente)
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="saqueQuinzenal">Link do botão "Mudança de Saque Quinzenal"</Label>
+          <Input
+            id="saqueQuinzenal"
+            type="text"
+            placeholder="exemplo.com ou https://exemplo.com/saque-quinzenal"
+            value={saqueQuinzenalLink}
+            onChange={(e) => setSaqueQuinzenalLink(e.target.value)}
           />
           <p className="text-xs text-muted-foreground">
             Pode digitar com ou sem https:// (será adicionado automaticamente)
