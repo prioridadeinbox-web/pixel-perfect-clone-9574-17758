@@ -24,6 +24,12 @@ interface Solicitacao {
     nome: string;
     email: string;
   };
+  planos_adquiridos?: {
+    id_carteira: string;
+    planos: {
+      nome_plano: string;
+    };
+  } | null;
 }
 
 export const SolicitacoesTab = () => {
@@ -106,7 +112,11 @@ export const SolicitacoesTab = () => {
         .from("solicitacoes")
         .select(`
           *,
-          profiles!solicitacoes_user_id_fkey(nome, email)
+          profiles!solicitacoes_user_id_fkey(nome, email),
+          planos_adquiridos!solicitacoes_plano_adquirido_id_fkey(
+            id_carteira,
+            planos(nome_plano)
+          )
         `)
         .order("created_at", { ascending: false });
 
@@ -385,6 +395,7 @@ export const SolicitacoesTab = () => {
                   <thead className="bg-muted/30">
                     <tr>
                       <th className="text-left p-4 text-sm font-medium">Trader</th>
+                      <th className="text-left p-4 text-sm font-medium">Plano</th>
                       <th className="text-left p-4 text-sm font-medium">Tipo</th>
                       <th className="text-left p-4 text-sm font-medium">Descrição</th>
                       <th className="text-left p-4 text-sm font-medium">Horário</th>
@@ -400,6 +411,16 @@ export const SolicitacoesTab = () => {
                             <div className="font-medium">{item.profiles?.nome}</div>
                             <div className="text-sm text-muted-foreground">{item.profiles?.email}</div>
                           </div>
+                        </td>
+                        <td className="p-4">
+                          {item.planos_adquiridos ? (
+                            <div className="text-sm">
+                              <div className="font-medium">{item.planos_adquiridos.planos.nome_plano}</div>
+                              <div className="text-muted-foreground">ID {item.planos_adquiridos.id_carteira}</div>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
                         </td>
                         <td className="p-4">{getTipoLabel(item.tipo_solicitacao)}</td>
                         <td className="p-4 text-sm">{item.descricao || "-"}</td>

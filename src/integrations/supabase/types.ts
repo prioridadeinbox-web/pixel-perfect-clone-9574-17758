@@ -385,10 +385,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      delete_expired_logs: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      delete_expired_logs: { Args: never; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
