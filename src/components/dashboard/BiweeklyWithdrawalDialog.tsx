@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,6 +17,28 @@ export const BiweeklyWithdrawalDialog = ({
   planId,
 }: BiweeklyWithdrawalDialogProps) => {
   const [loading, setLoading] = useState(false);
+  const [configLink, setConfigLink] = useState("");
+
+  useEffect(() => {
+    if (open) {
+      loadConfigLink();
+    }
+  }, [open]);
+
+  const loadConfigLink = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("platform_config")
+        .select("config_value")
+        .eq("config_key", "saque_quinzenal_link")
+        .maybeSingle();
+
+      if (error) throw error;
+      setConfigLink(data?.config_value || "");
+    } catch (error) {
+      console.error("Erro ao carregar link configurado:", error);
+    }
+  };
 
   const handleActivate = async () => {
     setLoading(true);
@@ -37,6 +59,12 @@ export const BiweeklyWithdrawalDialog = ({
 
       await AuditLogger.logBiweeklyWithdrawalRequest();
       toast.success("Solicitação enviada com sucesso!");
+      
+      // Abrir link configurado se existir
+      if (configLink) {
+        window.open(configLink, "_blank");
+      }
+      
       onOpenChange(false);
     } catch (error: any) {
       toast.error("Erro ao enviar solicitação: " + error.message);
