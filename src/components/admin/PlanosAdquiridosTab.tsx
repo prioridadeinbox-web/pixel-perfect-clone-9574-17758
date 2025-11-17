@@ -28,6 +28,7 @@ const PlanosAdquiridosTab = () => {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [manualTimelineOpen, setManualTimelineOpen] = useState(false);
   const [selectedPlanoId, setSelectedPlanoId] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<{
     cliente_id: string;
     plano_id: string;
@@ -65,6 +66,9 @@ const PlanosAdquiridosTab = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Prevenir duplo clique
+    if (isSubmitting) return;
+    
     // Validar campos obrigatórios
     if (!formData.cliente_id) {
       toast.error("Selecione um cliente");
@@ -75,6 +79,8 @@ const PlanosAdquiridosTab = () => {
       toast.error("Selecione um plano");
       return;
     }
+    
+    setIsSubmitting(true);
     
     try {
       if (editingPlano) {
@@ -131,6 +137,8 @@ const PlanosAdquiridosTab = () => {
       loadData();
     } catch (error: any) {
       toast.error(error.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -372,7 +380,9 @@ const PlanosAdquiridosTab = () => {
                   <p className="text-xs text-muted-foreground mt-1">ID da carteira é gerado automaticamente</p>
                 </div>
               )}
-              <Button type="submit" className="w-full">Salvar</Button>
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? "Salvando..." : "Salvar"}
+              </Button>
             </form>
           </DialogContent>
         </Dialog>
