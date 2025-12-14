@@ -38,6 +38,8 @@ const Dashboard = () => {
   const [comprarPlanoLink, setComprarPlanoLink] = useState("");
   const [contatarSuporteLink, setContatarSuporteLink] = useState("");
   const [voltarSiteLink, setVoltarSiteLink] = useState("");
+  const [profitOnePreco, setProfitOnePreco] = useState("");
+  const [profitProPreco, setProfitProPreco] = useState("");
   const [activeDialog, setActiveDialog] = useState<{
     type: 'withdrawal' | 'biweekly' | 'secondChance' | 'comments' | 'approval' | null;
     planId: string;
@@ -154,7 +156,9 @@ const Dashboard = () => {
           "profit_pro_link",
           "comprar_plano_link",
           "contatar_suporte_link",
-          "voltar_site_link"
+          "voltar_site_link",
+          "profit_one_preco",
+          "profit_pro_preco"
         ]);
 
       const oneLink = configData?.find(c => c.config_key === "profit_one_link");
@@ -162,6 +166,8 @@ const Dashboard = () => {
       const comprarLink = configData?.find(c => c.config_key === "comprar_plano_link");
       const suporteLink = configData?.find(c => c.config_key === "contatar_suporte_link");
       const voltarLink = configData?.find(c => c.config_key === "voltar_site_link");
+      const onePreco = configData?.find(c => c.config_key === "profit_one_preco");
+      const proPreco = configData?.find(c => c.config_key === "profit_pro_preco");
       
       // Normaliza os links ao carregar
       setProfitOneLink(normalizeUrl(oneLink?.config_value || "#"));
@@ -169,6 +175,8 @@ const Dashboard = () => {
       setComprarPlanoLink(normalizeUrl(comprarLink?.config_value || "/"));
       setContatarSuporteLink(normalizeUrl(suporteLink?.config_value || "https://wa.me/5512987072587"));
       setVoltarSiteLink(normalizeUrl(voltarLink?.config_value || "/"));
+      setProfitOnePreco(onePreco?.config_value || "");
+      setProfitProPreco(proPreco?.config_value || "");
 
       const { data: profileData } = await supabase
         .from("profiles")
@@ -685,8 +693,9 @@ const Dashboard = () => {
                     >
                       ATIVAR PROFIT ONE
                     </Button>
-                    <p className="text-[22px] font-bold text-foreground mt-2">R$ 90,00 por mês</p>
-                    <p className="text-xs text-foreground/70">Primeiro mês grátis para novos usuários</p>
+                    {profitOnePreco && (
+                      <p className="text-[22px] font-bold text-foreground mt-2">{profitOnePreco}</p>
+                    )}
                   </div>
                   <div className="flex flex-col items-start">
                     <Button 
@@ -701,7 +710,9 @@ const Dashboard = () => {
                     >
                       ATIVAR PROFIT PRO
                     </Button>
-                    <p className="text-[22px] font-bold text-foreground mt-2">R$ 220,00 por mês</p>
+                    {profitProPreco && (
+                      <p className="text-[22px] font-bold text-foreground mt-2">{profitProPreco}</p>
+                    )}
                   </div>
                   <Button className="bg-foreground hover:bg-foreground/90 text-white font-bold px-8">
                     DESATIVAR PLANO
