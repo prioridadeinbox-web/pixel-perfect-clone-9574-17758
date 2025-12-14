@@ -14,6 +14,8 @@ export const PlatformLinksConfig = () => {
   const [contatarSuporteLink, setContatarSuporteLink] = useState("");
   const [voltarSiteLink, setVoltarSiteLink] = useState("");
   const [saqueQuinzenalLink, setSaqueQuinzenalLink] = useState("");
+  const [profitOnePreco, setProfitOnePreco] = useState("");
+  const [profitProPreco, setProfitProPreco] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -32,7 +34,9 @@ export const PlatformLinksConfig = () => {
           "comprar_plano_link",
           "contatar_suporte_link",
           "voltar_site_link",
-          "saque_quinzenal_link"
+          "saque_quinzenal_link",
+          "profit_one_preco",
+          "profit_pro_preco"
         ]);
 
       if (error) throw error;
@@ -43,6 +47,8 @@ export const PlatformLinksConfig = () => {
       const suporteLink = data?.find(c => c.config_key === "contatar_suporte_link");
       const voltarLink = data?.find(c => c.config_key === "voltar_site_link");
       const saqueLink = data?.find(c => c.config_key === "saque_quinzenal_link");
+      const onePreco = data?.find(c => c.config_key === "profit_one_preco");
+      const proPreco = data?.find(c => c.config_key === "profit_pro_preco");
 
       setProfitOneLink(oneLink?.config_value || "");
       setProfitProLink(proLink?.config_value || "");
@@ -50,6 +56,8 @@ export const PlatformLinksConfig = () => {
       setContatarSuporteLink(suporteLink?.config_value || "");
       setVoltarSiteLink(voltarLink?.config_value || "");
       setSaqueQuinzenalLink(saqueLink?.config_value || "");
+      setProfitOnePreco(onePreco?.config_value || "");
+      setProfitProPreco(proPreco?.config_value || "");
     } catch (error: any) {
       toast.error("Erro ao carregar links: " + error.message);
     } finally {
@@ -107,6 +115,14 @@ export const PlatformLinksConfig = () => {
         {
           config_key: "saque_quinzenal_link",
           config_value: normalizedSaqueQuinzenal,
+        },
+        {
+          config_key: "profit_one_preco",
+          config_value: profitOnePreco.trim(),
+        },
+        {
+          config_key: "profit_pro_preco",
+          config_value: profitProPreco.trim(),
         },
       ];
 
@@ -228,6 +244,38 @@ export const PlatformLinksConfig = () => {
           <p className="text-xs text-muted-foreground">
             Pode digitar com ou sem https:// (será adicionado automaticamente)
           </p>
+        </div>
+
+        <div className="border-t pt-4 mt-4">
+          <h4 className="font-medium mb-4">Preços dos Planos</h4>
+          
+          <div className="space-y-2">
+            <Label htmlFor="profitOnePreco">Preço do Profit One (exibido no painel)</Label>
+            <Input
+              id="profitOnePreco"
+              type="text"
+              placeholder="Ex: R$ 90,00 por mês"
+              value={profitOnePreco}
+              onChange={(e) => setProfitOnePreco(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Texto exibido abaixo do botão "ATIVAR PROFIT ONE"
+            </p>
+          </div>
+
+          <div className="space-y-2 mt-4">
+            <Label htmlFor="profitProPreco">Preço do Profit Pro (exibido no painel)</Label>
+            <Input
+              id="profitProPreco"
+              type="text"
+              placeholder="Ex: R$ 220,00 por mês"
+              value={profitProPreco}
+              onChange={(e) => setProfitProPreco(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Texto exibido abaixo do botão "ATIVAR PROFIT PRO"
+            </p>
+          </div>
         </div>
 
         <Button onClick={handleSave} disabled={saving} className="w-full">
