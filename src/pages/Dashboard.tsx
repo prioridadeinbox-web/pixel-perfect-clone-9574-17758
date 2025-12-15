@@ -694,7 +694,7 @@ const Dashboard = () => {
                       ATIVAR PROFIT ONE
                     </Button>
                     {profitOnePreco && (
-                      <p className="text-[22px] font-bold text-foreground mt-2">{profitOnePreco}</p>
+                      <p className="text-[22px] font-bold text-foreground mt-2">{profitOnePreco} <span className="text-sm font-normal text-muted-foreground">por mês</span></p>
                     )}
                   </div>
                   <div className="flex flex-col items-start">
@@ -711,7 +711,7 @@ const Dashboard = () => {
                       ATIVAR PROFIT PRO
                     </Button>
                     {profitProPreco && (
-                      <p className="text-[22px] font-bold text-foreground mt-2">{profitProPreco}</p>
+                      <p className="text-[22px] font-bold text-foreground mt-2">{profitProPreco} <span className="text-sm font-normal text-muted-foreground">por mês</span></p>
                     )}
                   </div>
                   <Button className="bg-foreground hover:bg-foreground/90 text-white font-bold px-8">
