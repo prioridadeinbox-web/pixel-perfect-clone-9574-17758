@@ -691,7 +691,7 @@ const Dashboard = () => {
                       }}
                       className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8"
                     >
-                      ATIVAR PROFIT ONE
+                      ATIVAR FAST TRADE START
                     </Button>
                     {profitOnePreco && (
                       <p className="text-[22px] font-bold text-foreground mt-2">{profitOnePreco} <span className="text-sm font-normal text-muted-foreground">por mês</span></p>
@@ -708,7 +708,7 @@ const Dashboard = () => {
                       }}
                       className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8"
                     >
-                      ATIVAR PROFIT PRO
+                      ATIVAR FAST TRADE PRO
                     </Button>
                     {profitProPreco && (
                       <p className="text-[22px] font-bold text-foreground mt-2">{profitProPreco} <span className="text-sm font-normal text-muted-foreground">por mês</span></p>
