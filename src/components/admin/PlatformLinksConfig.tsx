@@ -163,11 +163,11 @@ export const PlatformLinksConfig = () => {
       
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="profitOne">Link do botão "ATIVAR PROFIT ONE"</Label>
+          <Label htmlFor="profitOne">Link do botão "ATIVAR FAST TRADE START"</Label>
           <Input
             id="profitOne"
             type="text"
-            placeholder="youtube.com ou https://exemplo.com/profit-one"
+            placeholder="youtube.com ou https://exemplo.com/fast-trade-start"
             value={profitOneLink}
             onChange={(e) => setProfitOneLink(e.target.value)}
           />
@@ -177,11 +177,11 @@ export const PlatformLinksConfig = () => {
         </div>
 
       <div className="space-y-2">
-          <Label htmlFor="profitPro">Link do botão "ATIVAR PROFIT PRO"</Label>
+          <Label htmlFor="profitPro">Link do botão "ATIVAR FAST TRADE PRO"</Label>
           <Input
             id="profitPro"
             type="text"
-            placeholder="youtube.com ou https://exemplo.com/profit-pro"
+            placeholder="youtube.com ou https://exemplo.com/fast-trade-pro"
             value={profitProLink}
             onChange={(e) => setProfitProLink(e.target.value)}
           />
@@ -250,7 +250,7 @@ export const PlatformLinksConfig = () => {
           <h4 className="font-medium mb-4">Preços dos Planos</h4>
           
           <div className="space-y-2">
-            <Label htmlFor="profitOnePreco">Preço do Profit One (exibido no painel)</Label>
+            <Label htmlFor="profitOnePreco">Preço do Fast Trade Start (exibido no painel)</Label>
             <Input
               id="profitOnePreco"
               type="text"
@@ -259,12 +259,12 @@ export const PlatformLinksConfig = () => {
               onChange={(e) => setProfitOnePreco(e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              Texto exibido abaixo do botão "ATIVAR PROFIT ONE"
+              Texto exibido abaixo do botão "ATIVAR FAST TRADE START"
             </p>
           </div>
 
           <div className="space-y-2 mt-4">
-            <Label htmlFor="profitProPreco">Preço do Profit Pro (exibido no painel)</Label>
+            <Label htmlFor="profitProPreco">Preço do Fast Trade Pro (exibido no painel)</Label>
             <Input
               id="profitProPreco"
               type="text"
@@ -273,7 +273,7 @@ export const PlatformLinksConfig = () => {
               onChange={(e) => setProfitProPreco(e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              Texto exibido abaixo do botão "ATIVAR PROFIT PRO"
+              Texto exibido abaixo do botão "ATIVAR FAST TRADE PRO"
             </p>
           </div>
         </div>
