@@ -104,7 +104,7 @@ const Dashboard = () => {
       if (activeDialog.type || isEditing) {
         return;
       }
-      
+
       setIsRefreshing(true);
       await loadUserData(user.id);
       setIsRefreshing(false);
@@ -133,50 +133,69 @@ const Dashboard = () => {
   // Normaliza a URL adicionando https:// se necessário
   const normalizeUrl = (url: string): string => {
     if (!url || url.trim() === "" || url === "#") return "#";
-    
+
     const trimmedUrl = url.trim();
-    
+
     // Se já tem protocolo, retorna como está
     if (trimmedUrl.startsWith("http://") || trimmedUrl.startsWith("https://")) {
       return trimmedUrl;
     }
-    
+
     // Adiciona https:// automaticamente
     return `https://${trimmedUrl}`;
   };
 
+  const [plans, setPlans] = useState<{ name: string, link: string, price: string }[]>([]);
+  const [desativarPlanoLink, setDesativarPlanoLink] = useState("");
+
   const loadUserData = async (userId: string) => {
     try {
-      // Carregar links de ativação
+      // Carregar links de ativação e configurações
       const { data: configData } = await supabase
         .from("platform_config")
         .select("*")
         .in("config_key", [
-          "profit_one_link", 
-          "profit_pro_link",
-          "comprar_plano_link",
-          "contatar_suporte_link",
-          "voltar_site_link",
-          "profit_one_preco",
-          "profit_pro_preco"
+          "profit_one_link", "profit_pro_link", "profit_one_preco", "profit_pro_preco",
+          "plan_1_name", "plan_1_link", "plan_1_price",
+          "plan_2_name", "plan_2_link", "plan_2_price",
+          "plan_3_name", "plan_3_link", "plan_3_price",
+          "plan_4_name", "plan_4_link", "plan_4_price",
+          "comprar_plano_link", "contatar_suporte_link", "voltar_site_link",
+          "desativar_plano_link"
         ]);
 
-      const oneLink = configData?.find(c => c.config_key === "profit_one_link");
-      const proLink = configData?.find(c => c.config_key === "profit_pro_link");
-      const comprarLink = configData?.find(c => c.config_key === "comprar_plano_link");
-      const suporteLink = configData?.find(c => c.config_key === "contatar_suporte_link");
-      const voltarLink = configData?.find(c => c.config_key === "voltar_site_link");
-      const onePreco = configData?.find(c => c.config_key === "profit_one_preco");
-      const proPreco = configData?.find(c => c.config_key === "profit_pro_preco");
-      
-      // Normaliza os links ao carregar
-      setProfitOneLink(normalizeUrl(oneLink?.config_value || "#"));
-      setProfitProLink(normalizeUrl(proLink?.config_value || "#"));
-      setComprarPlanoLink(normalizeUrl(comprarLink?.config_value || "/"));
-      setContatarSuporteLink(normalizeUrl(suporteLink?.config_value || "https://wa.me/5512987072587"));
-      setVoltarSiteLink(normalizeUrl(voltarLink?.config_value || "/"));
-      setProfitOnePreco(onePreco?.config_value || "");
-      setProfitProPreco(proPreco?.config_value || "");
+      const getConfig = (key: string) => configData?.find(c => c.config_key === key)?.config_value || "";
+
+      // Load Plans
+      const loadedPlans = [
+        {
+          name: getConfig("plan_1_name") || "Fast Trade Start",
+          link: normalizeUrl(getConfig("plan_1_link") || getConfig("profit_one_link")),
+          price: getConfig("plan_1_price") || getConfig("profit_one_preco")
+        },
+        {
+          name: getConfig("plan_2_name") || "Fast Trade Pro",
+          link: normalizeUrl(getConfig("plan_2_link") || getConfig("profit_pro_link")),
+          price: getConfig("plan_2_price") || getConfig("profit_pro_preco")
+        },
+        {
+          name: getConfig("plan_3_name"),
+          link: normalizeUrl(getConfig("plan_3_link")),
+          price: getConfig("plan_3_price")
+        },
+        {
+          name: getConfig("plan_4_name"),
+          link: normalizeUrl(getConfig("plan_4_link")),
+          price: getConfig("plan_4_price")
+        }
+      ].filter(p => p.name && p.link);
+
+      setPlans(loadedPlans);
+
+      setComprarPlanoLink(normalizeUrl(getConfig("comprar_plano_link") || "/"));
+      setContatarSuporteLink(normalizeUrl(getConfig("contatar_suporte_link") || "https://wa.me/5512987072587"));
+      setVoltarSiteLink(normalizeUrl(getConfig("voltar_site_link") || "/"));
+      setDesativarPlanoLink(normalizeUrl(getConfig("desativar_plano_link") || "#"));
 
       const { data: profileData } = await supabase
         .from("profiles")
@@ -185,7 +204,7 @@ const Dashboard = () => {
         .single();
 
       setProfile(profileData);
-      
+
       // Carregar informações pessoais nos campos
       if (profileData) {
         // Tentar parsear informações antigas se existirem
@@ -223,13 +242,13 @@ const Dashboard = () => {
         .order("id_carteira", { ascending: true });
 
       setPlanosAdquiridos(planosData || []);
-      
+
       // Carregar documentos do usuário
       const { data: documentsData } = await supabase
         .from("user_documents")
         .select("*")
         .eq("user_id", userId);
-      
+
       setUserDocuments(documentsData || []);
     } catch (error: any) {
       toast.error(error.message);
@@ -296,7 +315,7 @@ const Dashboard = () => {
 
       // NÃO usar URL pública, bucket é privado. Guardar o caminho do arquivo
       const storagePath = fileName;
-      
+
       // Salvar no banco de dados (permitir múltiplos por tipo)
       const { data, error: dbError } = await supabase
         .from("user_documents")
@@ -307,12 +326,12 @@ const Dashboard = () => {
           status: "pendente",
         })
         .select();
-      
+
       if (dbError) {
         console.error('Erro ao salvar no banco:', dbError);
         throw dbError;
       }
-      
+
       console.log('Documento salvo com sucesso:', data);
       await ActivityLogger.logDocumentUploaded(tipo);
       toast.success("Documento enviado com sucesso!");
@@ -460,9 +479,9 @@ const Dashboard = () => {
       {/* Header with gradient */}
       <header className="gradient-header px-8 py-4 flex items-center justify-between">
         <div className="flex items-center">
-          <img 
-            src={logoImage} 
-            alt="Prime Capital" 
+          <img
+            src={logoImage}
+            alt="Prime Capital"
             className="h-20 w-auto object-contain"
           />
         </div>
@@ -482,7 +501,7 @@ const Dashboard = () => {
             <div className="absolute top-6 right-6">
               <UserMenu onLogout={handleLogout} onBackToSite={handleBackToSite} />
             </div>
-            
+
             <div className="flex items-center gap-8">
               <ProfilePictureUpload
                 userId={session!.user.id}
@@ -490,7 +509,7 @@ const Dashboard = () => {
                 userName={profile?.nome || "Trader"}
                 onUploadComplete={(url) => setProfile({ ...profile, foto_perfil: url })}
               />
-              
+
               <div className="flex-1 space-y-4">
                 <h2 className="text-3xl font-bold text-foreground">
                   Olá, <span className="text-primary">{profile?.nome || "Trader"}</span>.
@@ -548,86 +567,86 @@ const Dashboard = () => {
                 {planosAdquiridos
                   .slice((planosCurrentPage - 1) * planosPerPage, planosCurrentPage * planosPerPage)
                   .map((plano) => (
-                  <div key={plano.id} className="space-y-3">
-                    {/* Main Card */}
-                    <div className="bg-gray-100 rounded-lg p-6">
-                      <div className="grid grid-cols-5 gap-6 items-center">
-                        {/* ID da Carteira */}
-                        <div className="text-foreground font-semibold text-lg">
-                          {plano.id_carteira}
-                        </div>
+                    <div key={plano.id} className="space-y-3">
+                      {/* Main Card */}
+                      <div className="bg-gray-100 rounded-lg p-6">
+                        <div className="grid grid-cols-5 gap-6 items-center">
+                          {/* ID da Carteira */}
+                          <div className="text-foreground font-semibold text-lg">
+                            {plano.id_carteira}
+                          </div>
 
-                        {/* Tipo de plano */}
-                        <div className="text-foreground font-medium">
-                          {plano.planos?.nome_plano || '-'}
-                        </div>
+                          {/* Tipo de plano */}
+                          <div className="text-foreground font-medium">
+                            {plano.planos?.nome_plano || '-'}
+                          </div>
 
-                        {/* Status do Plano */}
-                        <div>
-                          {getStatusBadge(plano.status_plano)}
-                        </div>
+                          {/* Status do Plano */}
+                          <div>
+                            {getStatusBadge(plano.status_plano)}
+                          </div>
 
-                        {/* Saque */}
-                        <div className="flex items-center gap-2">
-                          <span className="text-foreground font-medium">
-                            {plano.tipo_saque === 'mensal' ? 'Mensal' : 'Quinzenal'}
-                          </span>
-                          <span className="inline-flex items-center justify-center w-8 h-8 rounded-md bg-white border border-border text-foreground font-bold text-sm">
-                            {plano.tipo_saque === 'mensal' ? '30' : '15'}
-                          </span>
-                          <button
-                            onClick={() => plano.tipo_saque === 'mensal' ? openDialog('biweekly', plano.id) : null}
-                            className={`text-foreground/50 text-xs hover:text-primary hover:underline ${plano.tipo_saque === 'mensal' ? 'cursor-pointer' : 'cursor-default'}`}
-                          >
-                            mudar para {plano.tipo_saque === 'mensal' ? 'quinzenal' : 'mensal'}
-                          </button>
-                        </div>
+                          {/* Saque */}
+                          <div className="flex items-center gap-2">
+                            <span className="text-foreground font-medium">
+                              {plano.tipo_saque === 'mensal' ? 'Mensal' : 'Quinzenal'}
+                            </span>
+                            <span className="inline-flex items-center justify-center w-8 h-8 rounded-md bg-white border border-border text-foreground font-bold text-sm">
+                              {plano.tipo_saque === 'mensal' ? '30' : '15'}
+                            </span>
+                            <button
+                              onClick={() => plano.tipo_saque === 'mensal' ? openDialog('biweekly', plano.id) : null}
+                              className={`text-foreground/50 text-xs hover:text-primary hover:underline ${plano.tipo_saque === 'mensal' ? 'cursor-pointer' : 'cursor-default'}`}
+                            >
+                              mudar para {plano.tipo_saque === 'mensal' ? 'quinzenal' : 'mensal'}
+                            </button>
+                          </div>
 
-                        {/* Solicitações - Action Buttons */}
-                        <div className="flex gap-2 justify-end">
-                          <button 
-                            onClick={() => openDialog('secondChance', plano.id)}
-                            className="w-10 h-10 border border-border rounded flex items-center justify-center hover:bg-white transition-colors bg-white"
-                            title="Segunda chance"
-                          >
-                            <img src={iconsRecomecar} alt="Recomeçar" className="w-5 h-5" />
-                          </button>
-                          <button 
-                            onClick={() => openDialog('withdrawal', plano.id)}
-                            className="w-10 h-10 border border-border rounded flex items-center justify-center hover:bg-white transition-colors bg-white"
-                            title="Solicitação de saque"
-                          >
-                            <img src={iconsSaque} alt="Saque" className="w-5 h-5" />
-                          </button>
-                          <button 
-                            onClick={() => openDialog('comments', plano.id)}
-                            className="w-10 h-10 border border-border rounded flex items-center justify-center hover:bg-white transition-colors bg-white"
-                            title="Comentários"
-                          >
-                            <img src={iconsComentarios} alt="Comentários" className="w-5 h-5" />
-                          </button>
-                          <button 
-                            onClick={() => openDialog('approval', plano.id)}
-                            className="w-10 h-10 border border-border rounded flex items-center justify-center hover:bg-white transition-colors bg-white"
-                            title="Solicitar aprovação"
-                          >
-                            <img src={iconsSolicitarAprovacao} alt="Solicitar aprovação" className="w-5 h-5" />
-                          </button>
+                          {/* Solicitações - Action Buttons */}
+                          <div className="flex gap-2 justify-end">
+                            <button
+                              onClick={() => openDialog('secondChance', plano.id)}
+                              className="w-10 h-10 border border-border rounded flex items-center justify-center hover:bg-white transition-colors bg-white"
+                              title="Segunda chance"
+                            >
+                              <img src={iconsRecomecar} alt="Recomeçar" className="w-5 h-5" />
+                            </button>
+                            <button
+                              onClick={() => openDialog('withdrawal', plano.id)}
+                              className="w-10 h-10 border border-border rounded flex items-center justify-center hover:bg-white transition-colors bg-white"
+                              title="Solicitação de saque"
+                            >
+                              <img src={iconsSaque} alt="Saque" className="w-5 h-5" />
+                            </button>
+                            <button
+                              onClick={() => openDialog('comments', plano.id)}
+                              className="w-10 h-10 border border-border rounded flex items-center justify-center hover:bg-white transition-colors bg-white"
+                              title="Comentários"
+                            >
+                              <img src={iconsComentarios} alt="Comentários" className="w-5 h-5" />
+                            </button>
+                            <button
+                              onClick={() => openDialog('approval', plano.id)}
+                              className="w-10 h-10 border border-border rounded flex items-center justify-center hover:bg-white transition-colors bg-white"
+                              title="Solicitar aprovação"
+                            >
+                              <img src={iconsSolicitarAprovacao} alt="Solicitar aprovação" className="w-5 h-5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Timeline Section - Outside card, white background */}
+                      <div className="px-6">
+                        <div className="text-sm font-semibold text-foreground mb-2">
+                          Linha do tempo
+                        </div>
+                        <div className="pl-4">
+                          <PlanTimeline entries={plano.historico_observacoes || []} />
                         </div>
                       </div>
                     </div>
-
-                    {/* Timeline Section - Outside card, white background */}
-                    <div className="px-6">
-                      <div className="text-sm font-semibold text-foreground mb-2">
-                        Linha do tempo
-                      </div>
-                      <div className="pl-4">
-                        <PlanTimeline entries={plano.historico_observacoes || []} />
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  ))}
 
                 {/* Pagination Controls */}
                 {planosAdquiridos.length > planosPerPage && (
@@ -641,11 +660,11 @@ const Dashboard = () => {
                     >
                       <ChevronLeft className="h-5 w-5" />
                     </Button>
-                    
+
                     <span className="text-sm text-muted-foreground px-3">
                       Página {planosCurrentPage} de {Math.ceil(planosAdquiridos.length / planosPerPage)}
                     </span>
-                    
+
                     <Button
                       variant="outline"
                       size="icon"
@@ -666,10 +685,10 @@ const Dashboard = () => {
                 <h3 className="text-[32px] font-bold text-foreground">Status da plataforma</h3>
                 <div className="border-b border-border/30 mt-2"></div>
               </div>
-              
-              <div className="flex items-start justify-between gap-6">
+
+              <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-6">
                 {/* Status indicator on the left */}
-                <div className="flex items-center gap-3 pt-2">
+                <div className="flex items-center gap-3 pt-2 whitespace-nowrap">
                   <span className="text-2xl">
                     {profile?.pagamento_ativo ? '🟩' : '🟥'}
                   </span>
@@ -678,48 +697,78 @@ const Dashboard = () => {
                   </span>
                 </div>
 
-                {/* Buttons on the right - SEMPRE VISÍVEIS */}
-                <div className="flex gap-3">
-                  <div className="flex flex-col items-start">
-                    <Button 
+                {/* Buttons on the right - SEMPRE VISÍVEIS - Dynamic Flexible Layout */}
+                <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-3 gap-4 items-start w-full xl:w-auto">
+                  {/* First 2 Plans */}
+                  {plans.slice(0, 2).map((plan, index) => (
+                    <div key={index} className="flex flex-col items-center xl:items-start w-full">
+                      <Button
+                        onClick={() => {
+                          if (plan.link && plan.link !== "#") {
+                            window.open(plan.link, "_blank", "noopener,noreferrer");
+                          } else {
+                            toast.error("Link não configurado. Entre em contato com o suporte.");
+                          }
+                        }}
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold w-full h-12 uppercase px-2 text-xs md:text-sm whitespace-nowrap overflow-hidden text-ellipsis"
+                        title={`ATIVAR ${plan.name}`}
+                      >
+                        ATIVAR {plan.name}
+                      </Button>
+                      {plan.price && (
+                        <p className="text-[18px] font-bold text-foreground mt-2 text-center xl:text-left w-full">
+                          {plan.price} <span className="text-sm font-normal text-muted-foreground block md:inline">/mês</span>
+                        </p>
+                      )}
+                    </div>
+                  ))}
+
+                  {/* Spacer to force next items to second row (only on desktop) */}
+                  {plans.length >= 2 && <div className="hidden md:block"></div>}
+
+                  {/* Remaining Plans (Plan 3, 4, etc.) */}
+                  {plans.slice(2).map((plan, index) => (
+                    <div key={index + 2} className="flex flex-col items-center xl:items-start w-full">
+                      <Button
+                        onClick={() => {
+                          if (plan.link && plan.link !== "#") {
+                            window.open(plan.link, "_blank", "noopener,noreferrer");
+                          } else {
+                            toast.error("Link não configurado. Entre em contato com o suporte.");
+                          }
+                        }}
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold w-full h-12 uppercase px-2 text-xs md:text-sm whitespace-nowrap overflow-hidden text-ellipsis"
+                        title={`ATIVAR ${plan.name}`}
+                      >
+                        ATIVAR {plan.name}
+                      </Button>
+                      {plan.price && (
+                        <p className="text-[18px] font-bold text-foreground mt-2 text-center xl:text-left w-full">
+                          {plan.price} <span className="text-sm font-normal text-muted-foreground block md:inline">/mês</span>
+                        </p>
+                      )}
+                    </div>
+                  ))}
+
+                  {/* Deactivate Button */}
+                  <div className="flex flex-col items-center xl:items-start w-full">
+                    <Button
                       onClick={() => {
-                        if (profitOneLink && profitOneLink !== "#") {
-                          window.open(profitOneLink, "_blank", "noopener,noreferrer");
+                        if (desativarPlanoLink && desativarPlanoLink !== "#") {
+                          window.open(desativarPlanoLink, "_blank", "noopener,noreferrer");
                         } else {
                           toast.error("Link não configurado. Entre em contato com o suporte.");
                         }
                       }}
-                      className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8"
+                      className="bg-foreground hover:bg-foreground/90 text-white font-bold w-full h-12 uppercase px-2 text-xs md:text-sm whitespace-nowrap overflow-hidden text-ellipsis"
+                      title="DESATIVAR PLANO"
                     >
-                      ATIVAR FAST TRADE START
+                      DESATIVAR PLANO
                     </Button>
-                    {profitOnePreco && (
-                      <p className="text-[22px] font-bold text-foreground mt-2">{profitOnePreco} <span className="text-sm font-normal text-muted-foreground">por mês</span></p>
-                    )}
                   </div>
-                  <div className="flex flex-col items-start">
-                    <Button 
-                      onClick={() => {
-                        if (profitProLink && profitProLink !== "#") {
-                          window.open(profitProLink, "_blank", "noopener,noreferrer");
-                        } else {
-                          toast.error("Link não configurado. Entre em contato com o suporte.");
-                        }
-                      }}
-                      className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8"
-                    >
-                      ATIVAR FAST TRADE PRO
-                    </Button>
-                    {profitProPreco && (
-                      <p className="text-[22px] font-bold text-foreground mt-2">{profitProPreco} <span className="text-sm font-normal text-muted-foreground">por mês</span></p>
-                    )}
-                  </div>
-                  <Button className="bg-foreground hover:bg-foreground/90 text-white font-bold px-8">
-                    DESATIVAR PLANO
-                  </Button>
                 </div>
               </div>
-              
+
               {!profile?.pagamento_ativo && (
                 <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg mt-4">
                   <p className="text-sm text-destructive font-medium">
@@ -728,6 +777,7 @@ const Dashboard = () => {
                 </div>
               )}
             </div>
+
 
             {/* Informações cadastrais Section */}
             <div className="bg-white rounded-lg p-8 space-y-6">
@@ -739,7 +789,7 @@ const Dashboard = () => {
                     Preencha todos os dados para que você não tenha nenhum problema ao solicitar um saque.
                   </p>
                 </div>
-                <button 
+                <button
                   onClick={() => setIsEditing(!isEditing)}
                   className="p-2 hover:bg-muted/50 rounded-lg transition-colors"
                   title={isEditing ? "Cancelar edição" : "Editar informações"}
@@ -751,50 +801,50 @@ const Dashboard = () => {
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-sm text-foreground">Nome completo</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={personalInfo.nome}
-                    onChange={(e) => setPersonalInfo({...personalInfo, nome: e.target.value})}
+                    onChange={(e) => setPersonalInfo({ ...personalInfo, nome: e.target.value })}
                     readOnly={!isEditing}
                     className="w-full px-4 py-3 rounded-lg bg-muted/30 border-0 disabled:opacity-70 read-only:opacity-70"
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm text-foreground">Data de nascimento</label>
-                  <input 
-                    type="date" 
+                  <input
+                    type="date"
                     value={personalInfo.dataNascimento}
-                    onChange={(e) => setPersonalInfo({...personalInfo, dataNascimento: e.target.value})}
+                    onChange={(e) => setPersonalInfo({ ...personalInfo, dataNascimento: e.target.value })}
                     readOnly={!isEditing}
                     className="w-full px-4 py-3 rounded-lg bg-muted/30 border-0 disabled:opacity-70 read-only:opacity-70"
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm text-foreground">Telefone</label>
-                  <input 
-                    type="tel" 
+                  <input
+                    type="tel"
                     value={personalInfo.telefone}
-                    onChange={(e) => setPersonalInfo({...personalInfo, telefone: e.target.value})}
+                    onChange={(e) => setPersonalInfo({ ...personalInfo, telefone: e.target.value })}
                     readOnly={!isEditing}
                     className="w-full px-4 py-3 rounded-lg bg-muted/30 border-0 disabled:opacity-70 read-only:opacity-70"
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm text-foreground">Email</label>
-                  <input 
-                    type="email" 
+                  <input
+                    type="email"
                     value={personalInfo.email}
-                    onChange={(e) => setPersonalInfo({...personalInfo, email: e.target.value})}
+                    onChange={(e) => setPersonalInfo({ ...personalInfo, email: e.target.value })}
                     readOnly={!isEditing}
                     className="w-full px-4 py-3 rounded-lg bg-muted/30 border-0 disabled:opacity-70 read-only:opacity-70"
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm text-foreground">CPF</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={personalInfo.cpf}
-                    onChange={(e) => setPersonalInfo({...personalInfo, cpf: e.target.value.replace(/\D/g, '').slice(0, 11)})}
+                    onChange={(e) => setPersonalInfo({ ...personalInfo, cpf: e.target.value.replace(/\D/g, '').slice(0, 11) })}
                     placeholder="Apenas números"
                     readOnly={!isEditing}
                     className="w-full px-4 py-3 rounded-lg bg-muted/30 border-0 disabled:opacity-70 read-only:opacity-70"
@@ -802,30 +852,30 @@ const Dashboard = () => {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm text-foreground">Rua e Bairro</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={personalInfo.endereco}
-                    onChange={(e) => setPersonalInfo({...personalInfo, endereco: e.target.value})}
+                    onChange={(e) => setPersonalInfo({ ...personalInfo, endereco: e.target.value })}
                     readOnly={!isEditing}
                     className="w-full px-4 py-3 rounded-lg bg-muted/30 border-0 disabled:opacity-70 read-only:opacity-70"
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm text-foreground">Número residencial</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={personalInfo.numero}
-                    onChange={(e) => setPersonalInfo({...personalInfo, numero: e.target.value})}
+                    onChange={(e) => setPersonalInfo({ ...personalInfo, numero: e.target.value })}
                     readOnly={!isEditing}
                     className="w-full px-4 py-3 rounded-lg bg-muted/30 border-0 disabled:opacity-70 read-only:opacity-70"
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm text-foreground">CEP</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={personalInfo.cep}
-                    onChange={(e) => setPersonalInfo({...personalInfo, cep: e.target.value.replace(/\D/g, '').slice(0, 8)})}
+                    onChange={(e) => setPersonalInfo({ ...personalInfo, cep: e.target.value.replace(/\D/g, '').slice(0, 8) })}
                     placeholder="Apenas números"
                     readOnly={!isEditing}
                     className="w-full px-4 py-3 rounded-lg bg-muted/30 border-0 disabled:opacity-70 read-only:opacity-70"
@@ -833,20 +883,20 @@ const Dashboard = () => {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm text-foreground">Cidade</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={personalInfo.cidade}
-                    onChange={(e) => setPersonalInfo({...personalInfo, cidade: e.target.value})}
+                    onChange={(e) => setPersonalInfo({ ...personalInfo, cidade: e.target.value })}
                     readOnly={!isEditing}
                     className="w-full px-4 py-3 rounded-lg bg-muted/30 border-0 disabled:opacity-70 read-only:opacity-70"
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm text-foreground">Estado</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={personalInfo.estado}
-                    onChange={(e) => setPersonalInfo({...personalInfo, estado: e.target.value.toUpperCase().slice(0, 2)})}
+                    onChange={(e) => setPersonalInfo({ ...personalInfo, estado: e.target.value.toUpperCase().slice(0, 2) })}
                     placeholder="Ex: SP"
                     maxLength={2}
                     readOnly={!isEditing}
@@ -922,7 +972,7 @@ const Dashboard = () => {
                   <p className="text-sm text-foreground/70 mb-4">
                     Ao salvar, você está de acordo com o nosso regulamento atual. Vale lembrar que qualquer saque é efetuado apenas para chave PIX cadastrada no CPF do trader.
                   </p>
-                  <Button 
+                  <Button
                     onClick={handleSavePersonalInfo}
                     disabled={isSaving}
                     className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-12 py-3"
@@ -936,7 +986,7 @@ const Dashboard = () => {
             {/* Status Legend */}
             <div className="bg-white rounded-lg p-6 mt-8">
               <h4 className="text-xl font-bold text-foreground mb-6">Entenda o status do seu plano:</h4>
-              
+
               <div className="grid md:grid-cols-4 gap-6">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">

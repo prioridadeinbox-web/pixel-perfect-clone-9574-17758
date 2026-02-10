@@ -32,16 +32,16 @@ const Register = () => {
     const digits = cpf.replace(/\D/g, '');
     if (digits.length !== 11) return false;
     if (/^(\d)\1{10}$/.test(digits)) return false; // todos iguais -> inválido
-    
+
     const nums = digits.slice(0, 9).split('').map(Number);
-    
+
     // Primeiro dígito
     let s = 0;
     for (let i = 0; i < 9; i++) s += nums[i] * (10 - i);
     let r = s % 11;
     let d1 = 11 - r;
     if (d1 >= 10) d1 = 0;
-    
+
     // Segundo dígito
     nums.push(d1);
     let s2 = 0;
@@ -49,7 +49,7 @@ const Register = () => {
     let r2 = s2 % 11;
     let d2 = 11 - r2;
     if (d2 >= 10) d2 = 0;
-    
+
     return digits.slice(9) === `${d1}${d2}`;
   };
 
@@ -80,7 +80,7 @@ const Register = () => {
 
     try {
       const redirectUrl = `${window.location.origin}/`;
-      
+
       const { data: authData, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -107,12 +107,14 @@ const Register = () => {
             cep: formData.cep || null,
             cidade: formData.cidade || null,
             estado: formData.estado || null,
+            pagamento_ativo: false,
+            status_plataforma: 'Inativa',
           })
           .eq("id", authData.user.id);
 
         if (profileError) throw profileError;
       }
-      
+
       toast.success("Cadastro realizado! Você já pode fazer login.");
       navigate("/");
     } catch (error: any) {
@@ -127,15 +129,15 @@ const Register = () => {
       {/* Header with gradient */}
       <header className="gradient-header px-8 py-8 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <img 
-            src={logoImage} 
-            alt="Prime Capital" 
+          <img
+            src={logoImage}
+            alt="Prime Capital"
             className="h-12 w-auto object-contain"
           />
         </div>
         <div className="flex items-center gap-3">
           <span className="text-white text-2xl font-bold">Painel do Trader</span>
-          <button 
+          <button
             onClick={() => navigate("/")}
             className="text-white flex items-center gap-2 text-sm hover:opacity-90 transition-opacity"
           >
